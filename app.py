@@ -92,7 +92,7 @@ def load_sheet_data(sheet_id):
     return main_df, config_df, leave_df, audit_df
 
 def run_assignment(sheet_id):
-    """Core duty assignment logic — adapted from your original code."""
+    """Core duty assignment logic."""
     client = get_client()
     sh     = client.open_by_key(sheet_id)
 
@@ -196,7 +196,7 @@ def run_assignment(sheet_id):
     if logs:
         audit_ws.append_rows(logs)
 
-    load_sheet_data.clear()  # Cache clear
+    load_sheet_data.clear()
     return True, f"✅ {today_str} की ड्यूटी सफलतापूर्वक लग गई! कुल {len(logs)} बदलाव हुए।"
 
 
@@ -312,25 +312,22 @@ with tab1:
     if not shifts:
         st.info("अभी कोई ड्यूटी नहीं लगी है। ऊपर 'ड्यूटी लगाएं' बटन दबाएं।")
     else:
+        # ✅ FIX: सिर्फ colors रखे, shift_labels हटाए
         shift_colors = {0: "s1", 1: "s2", 2: "s3"}
-        shift_labels = {0: "प्रातः शिफ्ट", 1: "सायं शिफ्ट", 2: "रात्रि शिफ्ट"}
 
         cols = st.columns(len(shifts))
         for idx, s in enumerate(sorted(shifts)):
-            s_df = on_duty[on_duty[shift_col] == s][
-                [name_col, "Designation" if "Designation" in main_df.columns else name_col,
-                 "Days_On_Duty"] if "Days_On_Duty" in main_df.columns else [name_col]
-            ].copy()
+            s_df = on_duty[on_duty[shift_col] == s]
 
             badge_cls = shift_colors.get(idx % 3, "s1")
-            label     = shift_labels.get(idx % 3, s)
 
             with cols[idx]:
+                # ✅ FIX: सिर्फ {s} दिखाएं — कोई हिंदी label नहीं
                 st.markdown(f"""
                 <div style="background:white;border-radius:10px;padding:14px;
                      box-shadow:0 2px 8px rgba(0,0,0,0.1);min-height:200px;">
                   <div style="text-align:center;margin-bottom:10px;">
-                    <span class="shift-badge {badge_cls}">{s} — {label}</span>
+                    <span class="shift-badge {badge_cls}">{s}</span>
                     <div style="font-size:1.6rem;font-weight:700;color:#1F3864;margin-top:6px;">
                       {len(s_df)}
                     </div>
