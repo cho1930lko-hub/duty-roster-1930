@@ -5,7 +5,7 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime, date
 import json
 
-# ✅ STEP 1: set_page_config SABSE PEHLE (ye zaruri hai)
+# ✅ STEP 1: set_page_config SABSE PEHLE
 st.set_page_config(
     page_title="ड्यूटी रोस्टर | 1930",
     page_icon="🚨",
@@ -13,7 +13,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# ✅ STEP 2: Password Protection Function
+# ✅ STEP 2: Password Protection
 def check_password():
     def password_entered():
         if st.session_state["password"] == st.secrets["passwords"]["app_password"]:
@@ -34,11 +34,12 @@ def check_password():
     else:
         return True
 
-# ✅ STEP 3: Password sahi hone tak app band rakho
+# ✅ STEP 3: Password check
 if not check_password():
     st.stop()
 
-# ✅ STEP 4: Ab baaki poora app shuru hota hai
+# ✅ STEP 4: Sheet ID hardcoded — sidebar mein box nahi dikhega
+SHEET_ID = "1nwW5UvaMhBdcCQxR6TbPlwydDULS9MWZIml-nryjqRs"
 
 # ── Custom CSS ────────────────────────────────────────────────────────────────
 st.markdown("""
@@ -144,13 +145,13 @@ def run_assignment(sheet_id):
 
     # Load data
     df = pd.DataFrame(main_ws.get_all_records())
-    mob_col       = "Mobile_No"
-    name_col      = "Employee_Name"
-    status_col    = "STATUS"
-    shift_col     = "Current_Shift"
-    date_col      = "Shift_Start_Date"
-    days_col      = "Days_On_Duty"
-    duty_count_col= "Total_Duty_3M"
+    mob_col        = "Mobile_No"
+    name_col       = "Employee_Name"
+    status_col     = "STATUS"
+    shift_col      = "Current_Shift"
+    date_col       = "Shift_Start_Date"
+    days_col       = "Days_On_Duty"
+    duty_count_col = "Total_Duty_3M"
     s1_cnt, s2_cnt, s3_cnt = "Shift1count","Shift2count","Shift3count"
 
     if mob_col not in df.columns:
@@ -207,10 +208,10 @@ def run_assignment(sheet_id):
             sort_cols = [t_cnt, duty_count_col] if t_cnt in df.columns else [duty_count_col]
             selected = pool.sort_values(by=sort_cols).head(needed)
             for m in selected.index:
-                df.at[m, shift_col]     = s_name
-                df.at[m, date_col]      = today_str
-                df.at[m, days_col]      = 0
-                df.at[m, duty_count_col]+= 1
+                df.at[m, shift_col]      = s_name
+                df.at[m, date_col]       = today_str
+                df.at[m, days_col]       = 0
+                df.at[m, duty_count_col] += 1
                 if t_cnt in df.columns:
                     df.at[m, t_cnt] += 1
                 logs.append([today_str, now_time, m, df.at[m, name_col], "Assigned", s_name, "Success"])
@@ -235,24 +236,18 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ── Sheet ID input (sidebar) ──────────────────────────────────────────────────
+# ── Sidebar — sirf date/time dikhao ──────────────────────────────────────────
 with st.sidebar:
     st.markdown("### ⚙️ सेटिंग्स")
-    sheet_id = st.text_input("Google Sheet ID", value=st.secrets.get("SHEET_ID",""),
-                              help="Sheet URL में /d/ के बाद का हिस्सा")
     st.markdown("---")
     st.markdown("**आज की तारीख**")
     st.markdown(f"📅 {datetime.now().strftime('%d %B %Y')}")
     st.markdown(f"🕐 {datetime.now().strftime('%H:%M')} बजे")
 
-if not sheet_id:
-    st.warning("⚠️ Sidebar में Google Sheet ID डालें।")
-    st.stop()
-
 # ── Load Data ─────────────────────────────────────────────────────────────────
 with st.spinner("डेटा लोड हो रहा है..."):
     try:
-        main_df, config_df, leave_df, audit_df = load_sheet_data(sheet_id)
+        main_df, config_df, leave_df, audit_df = load_sheet_data(SHEET_ID)
     except Exception as e:
         st.error(f"❌ Sheet connect नहीं हुई: {e}")
         st.stop()
@@ -266,10 +261,10 @@ mob_col    = "Mobile_No"
 main_df[mob_col]    = main_df[mob_col].astype(str).str.strip()
 main_df[status_col] = pd.to_numeric(main_df[status_col], errors="coerce").fillna(0).astype(int)
 
-on_duty  = main_df[main_df[shift_col].str.strip() != ""]
-leave_ids= leave_df["Mobile_No"].astype(str).tolist() if "Mobile_No" in leave_df.columns else []
-on_leave = main_df[main_df[mob_col].isin(leave_ids)]
-inactive = main_df[main_df[status_col] == 0]
+on_duty    = main_df[main_df[shift_col].str.strip() != ""]
+leave_ids  = leave_df["Mobile_No"].astype(str).tolist() if "Mobile_No" in leave_df.columns else []
+on_leave   = main_df[main_df[mob_col].isin(leave_ids)]
+inactive   = main_df[main_df[status_col] == 0]
 unassigned = main_df[(main_df[shift_col].str.strip() == "") &
                      (~main_df[mob_col].isin(leave_ids)) &
                      (main_df[status_col] == 1)]
@@ -278,11 +273,11 @@ unassigned = main_df[(main_df[shift_col].str.strip() == "") &
 st.markdown('<div class="section-title">📊 सारांश</div>', unsafe_allow_html=True)
 c1, c2, c3, c4, c5 = st.columns(5)
 cards = [
-    (c1, len(main_df),   "कुल कर्मचारी",    "card-blue"),
-    (c2, len(on_duty),   "ड्यूटी पर",        "card-green"),
-    (c3, len(on_leave),  "अवकाश पर",         "card-orange"),
-    (c4, len(unassigned),"प्रतीक्षारत",       "card-purple"),
-    (c5, len(inactive),  "निष्क्रिय",         "card-red"),
+    (c1, len(main_df),    "कुल कर्मचारी", "card-blue"),
+    (c2, len(on_duty),    "ड्यूटी पर",     "card-green"),
+    (c3, len(on_leave),   "अवकाश पर",      "card-orange"),
+    (c4, len(unassigned), "प्रतीक्षारत",    "card-purple"),
+    (c5, len(inactive),   "निष्क्रिय",      "card-red"),
 ]
 for col, val, lbl, cls in cards:
     with col:
@@ -303,10 +298,9 @@ with col_btn:
     st.markdown('</div>', unsafe_allow_html=True)
 with col_info:
     today_str = datetime.now().strftime("%d-%m-%Y")
-    last_run  = ""
     try:
-        client = get_client()
-        sh = client.open_by_key(sheet_id)
+        client   = get_client()
+        sh       = client.open_by_key(SHEET_ID)
         last_run = sh.worksheet("Main_Duty").acell("L1").value or "कभी नहीं"
     except:
         last_run = "—"
@@ -314,7 +308,7 @@ with col_info:
 
 if run_clicked:
     with st.spinner("ड्यूटी लग रही है..."):
-        success, msg = run_assignment(sheet_id)
+        success, msg = run_assignment(SHEET_ID)
     if success:
         st.success(msg)
         st.balloons()
@@ -340,12 +334,10 @@ with tab1:
         st.info("अभी कोई ड्यूटी नहीं लगी है। ऊपर 'ड्यूटी लगाएं' बटन दबाएं।")
     else:
         shift_colors = {0: "s1", 1: "s2", 2: "s3"}
-
         cols = st.columns(len(shifts))
         for idx, s in enumerate(sorted(shifts)):
-            s_df = on_duty[on_duty[shift_col] == s]
+            s_df      = on_duty[on_duty[shift_col] == s]
             badge_cls = shift_colors.get(idx % 3, "s1")
-
             with cols[idx]:
                 st.markdown(f"""
                 <div style="background:white;border-radius:10px;padding:14px;
@@ -359,7 +351,7 @@ with tab1:
                   </div>
                 </div>""", unsafe_allow_html=True)
 
-                disp_cols = [c for c in [name_col, "Designation", "Days_On_Duty"] if c in main_df.columns]
+                disp_cols  = [c for c in [name_col, "Designation", "Days_On_Duty"] if c in main_df.columns]
                 rename_map = {name_col: "नाम", "Designation": "पद", "Days_On_Duty": "दिन"}
                 st.dataframe(
                     on_duty[on_duty[shift_col] == s][disp_cols].rename(columns=rename_map),
@@ -391,8 +383,8 @@ with tab2:
     elif status_filter == "निष्क्रिय":
         disp = disp[disp[status_col] == 0]
 
-    show_cols = [c for c in [mob_col, name_col, "Designation", shift_col, "Days_On_Duty",
-                              "Total_Duty_3M", status_col] if c in disp.columns]
+    show_cols  = [c for c in [mob_col, name_col, "Designation", shift_col, "Days_On_Duty",
+                               "Total_Duty_3M", status_col] if c in disp.columns]
     rename_map = {mob_col: "मोबाइल", name_col: "नाम", "Designation": "पद",
                   shift_col: "वर्तमान शिफ्ट", "Days_On_Duty": "दिन",
                   "Total_Duty_3M": "3M ड्यूटी", status_col: "स्थिति"}
@@ -424,7 +416,7 @@ with tab3:
         if l_mob:
             try:
                 client = get_client()
-                sh = client.open_by_key(sheet_id)
+                sh     = client.open_by_key(SHEET_ID)
                 sh.worksheet("Leave").append_row([
                     l_mob,
                     l_from.strftime("%d-%m-%Y"),
@@ -466,20 +458,20 @@ with tab5:
     st.markdown('<div class="section-title">➕ नया कर्मचारी जोड़ें</div>', unsafe_allow_html=True)
     ec1, ec2 = st.columns(2)
     with ec1:
-        e_mob  = st.text_input("मोबाइल नं. *", key="e_mob")
-        e_name = st.text_input("नाम (हिंदी) *", key="e_name")
-        e_desig= st.text_input("पद / पदनाम", key="e_desig")
+        e_mob   = st.text_input("मोबाइल नं. *", key="e_mob")
+        e_name  = st.text_input("नाम (हिंदी) *", key="e_name")
+        e_desig = st.text_input("पद / पदनाम", key="e_desig")
     with ec2:
-        e_rank = st.text_input("रैंक", key="e_rank")
-        e_status = st.selectbox("स्थिति", [1, 0], format_func=lambda x: "सक्रिय" if x == 1 else "निष्क्रिय")
+        e_rank       = st.text_input("रैंक", key="e_rank")
+        e_status     = st.selectbox("स्थिति", [1, 0], format_func=lambda x: "सक्रिय" if x == 1 else "निष्क्रिय")
         e_shift_pref = st.selectbox("शिफ्ट वरीयता", ["", "Shift1", "Shift2", "Shift3"])
 
     if st.button("💾 कर्मचारी सहेजें"):
         if e_mob and e_name:
             try:
                 client = get_client()
-                sh = client.open_by_key(sheet_id)
-                ws = sh.worksheet("Main_Duty")
+                sh     = client.open_by_key(SHEET_ID)
+                ws     = sh.worksheet("Main_Duty")
                 ws.append_row([e_mob, e_name, e_desig, e_rank, e_status,
                                 "", "", 0, 0, 0, 0, 0])
                 st.success(f"✅ {e_name} जोड़ा गया!")
