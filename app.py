@@ -5,7 +5,15 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime, date
 import json
 
-# ✅ PEHLE YE FUNCTION DAALO
+# ✅ STEP 1: set_page_config SABSE PEHLE (ye zaruri hai)
+st.set_page_config(
+    page_title="ड्यूटी रोस्टर | 1930",
+    page_icon="🚨",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
+
+# ✅ STEP 2: Password Protection Function
 def check_password():
     def password_entered():
         if st.session_state["password"] == st.secrets["passwords"]["app_password"]:
@@ -15,25 +23,22 @@ def check_password():
             st.session_state["password_correct"] = False
 
     if "password_correct" not in st.session_state:
-        st.text_input("🔐 Password daalo:", type="password", 
+        st.text_input("🔐 Password daalo:", type="password",
                       on_change=password_entered, key="password")
         return False
     elif not st.session_state["password_correct"]:
-        st.text_input("🔐 Password daalo:", type="password", 
+        st.text_input("🔐 Password daalo:", type="password",
                       on_change=password_entered, key="password")
         st.error("❌ Galat password! Dobara try karo.")
         return False
     else:
         return True
 
+# ✅ STEP 3: Password sahi hone tak app band rakho
 if not check_password():
     st.stop()
-st.set_page_config(
-    page_title="ड्यूटी रोस्टर | 1930",
-    page_icon="🚨",
-    layout="wide",
-    initial_sidebar_state="collapsed",
-)
+
+# ✅ STEP 4: Ab baaki poora app shuru hota hai
 
 # ── Custom CSS ────────────────────────────────────────────────────────────────
 st.markdown("""
@@ -334,17 +339,14 @@ with tab1:
     if not shifts:
         st.info("अभी कोई ड्यूटी नहीं लगी है। ऊपर 'ड्यूटी लगाएं' बटन दबाएं।")
     else:
-        # ✅ FIX: सिर्फ colors रखे, shift_labels हटाए
         shift_colors = {0: "s1", 1: "s2", 2: "s3"}
 
         cols = st.columns(len(shifts))
         for idx, s in enumerate(sorted(shifts)):
             s_df = on_duty[on_duty[shift_col] == s]
-
             badge_cls = shift_colors.get(idx % 3, "s1")
 
             with cols[idx]:
-                # ✅ FIX: सिर्फ {s} दिखाएं — कोई हिंदी label नहीं
                 st.markdown(f"""
                 <div style="background:white;border-radius:10px;padding:14px;
                      box-shadow:0 2px 8px rgba(0,0,0,0.1);min-height:200px;">
