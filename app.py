@@ -638,6 +638,66 @@ with tab1:
 # ── TAB 2: All Staff ──────────────────────────────────────────────────────────
 with tab2:
     st.markdown('<div class="section-title">👥 सम्पूर्ण कर्मचारी सूची</div>', unsafe_allow_html=True)
+    # ── कर्मचारी सर्च फीचर (नया) ─────────────────────────────────────
+st.markdown('<div class="section-title">🔍 कर्मचारी सर्च करें (नाम या मोबाइल)</div>', unsafe_allow_html=True)
+
+col_search1, col_search2 = st.columns([3, 1])
+
+with col_search1:
+    employee_search = st.text_input(
+        label="",
+        placeholder="नाम या मोबाइल नंबर टाइप करें...",
+        key="global_emp_search"
+    )
+
+with col_search2:
+    search_clicked = st.button("🔍 सर्च करें", use_container_width=True, type="primary")
+
+# सर्च रिजल्ट
+if employee_search.strip() and search_clicked:
+    term = employee_search.strip().lower()
+    
+    filtered = main_df[
+        (main_df[name_col].str.lower().str.contains(term, na=False)) |
+        (main_df[mob_col].astype(str).str.contains(term, na=False))
+    ].copy()
+    
+    if not filtered.empty:
+        st.success(f"✅ **{len(filtered)}** कर्मचारी मिले")
+        
+        # शिफ्ट के अनुसार रंग दिखाने के लिए
+        def get_shift_badge(shift):
+            if not shift or str(shift).strip() == "":
+                return "🔴 ड्यूटी नहीं"
+            elif "1" in str(shift):
+                return "🟡 Shift 1"
+            elif "2" in str(shift):
+                return "🟢 Shift 2"
+            elif "3" in str(shift):
+                return "🔵 Shift 3"
+            else:
+                return shift
+        
+        filtered["शिफ्ट"] = filtered[shift_col].apply(get_shift_badge)
+        
+        show_cols = [mob_col, name_col, "Designation", "शिफ्ट", "Days_On_Duty"]
+        rename_map = {
+            mob_col: "मोबाइल", 
+            name_col: "नाम", 
+            "Designation": "पद", 
+            "Days_On_Duty": "दिन"
+        }
+        
+        st.dataframe(
+            filtered[show_cols].rename(columns=rename_map),
+            use_container_width=True, 
+            hide_index=True,
+            height=400
+        )
+    else:
+        st.error("❌ कोई कर्मचारी नहीं मिला। नाम या मोबाइल सही से चेक करें।")
+        
+    st.markdown("---")
 
     col_search, col_filter = st.columns([2, 1])
     with col_search:
