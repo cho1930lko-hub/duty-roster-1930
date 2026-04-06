@@ -53,225 +53,145 @@ SHEET_ID = "1nwW5UvaMhBdcCQxR6TbPlwydDULS9MWZIml-nryjqRs"
 # ── Custom CSS ────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700;900&family=Rajdhani:wght@600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700;900&family=Inter:wght@400;500;600;700&display=swap');
 
 html, body, [class*="css"] {
-    font-family: 'Noto Sans Devanagari', sans-serif;
+    font-family: 'Noto Sans Devanagari', 'Inter', sans-serif;
 }
 
-/* ── MAGIC LIGHT HEADER ── */
+/* ── Modern Glassmorphism + Magic Header ── */
 .magic-header-wrap {
     position: relative;
-    margin-bottom: 28px;
-    padding: 4px;
-    border-radius: 18px;
-    background: linear-gradient(135deg, #0a0a1a, #0d1b3e, #0a0a1a);
+    margin-bottom: 30px;
+    padding: 6px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #0f172a, #1e3a8a);
     overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
-/* Rotating conic gradient border — magic light effect */
 .magic-header-wrap::before {
     content: '';
     position: absolute;
-    inset: -3px;
-    border-radius: 20px;
-    background: conic-gradient(
-        from 0deg,
-        #ff0080, #ff4d00, #ffcc00, #00ff88,
-        #00cfff, #7f5fff, #ff0080
-    );
-    animation: spin-border 4s linear infinite;
+    inset: -5px;
+    border-radius: 25px;
+    background: conic-gradient(from 0deg, #22d3ee, #a855f7, #ec4899, #f59e0b, #22d3ee);
+    animation: spin-border 6s linear infinite;
     z-index: 0;
-    filter: blur(2px);
-}
-
-/* Pulsing glow behind the box */
-.magic-header-wrap::after {
-    content: '';
-    position: absolute;
-    inset: -12px;
-    border-radius: 28px;
-    background: conic-gradient(
-        from 0deg,
-        #ff008080, #00cfff80, #7f5fff80, #ff008080
-    );
-    animation: spin-border 4s linear infinite;
-    filter: blur(18px);
-    z-index: -1;
-    opacity: 0.6;
-}
-
-@keyframes spin-border {
-    0%   { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    filter: blur(4px);
+    opacity: 0.85;
 }
 
 .magic-header-inner {
     position: relative;
     z-index: 1;
-    background: linear-gradient(135deg, #0d1b3e 0%, #1a2d5a 50%, #0d1b3e 100%);
-    border-radius: 14px;
-    padding: 22px 28px;
+    background: rgba(15, 23, 42, 0.95);
+    border-radius: 16px;
+    padding: 28px 32px;
     text-align: center;
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(148, 163, 184, 0.2);
 }
 
-/* Shimmer overlay on header text */
 .magic-header-inner h1 {
-    font-family: 'Rajdhani', 'Noto Sans Devanagari', sans-serif;
-    font-size: 2rem;
-    font-weight: 700;
-    margin: 0;
-    background: linear-gradient(90deg,
-        #ffffff 0%, #a8d4ff 25%, #ffffff 50%, #ffd700 75%, #ffffff 100%);
-    background-size: 200% auto;
+    font-size: 2.4rem;
+    font-weight: 800;
+    margin: 0 0 8px 0;
+    background: linear-gradient(90deg, #e0f2fe, #bae6fd, #ffffff, #c4d0ff);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: shimmer-text 3s linear infinite;
-    letter-spacing: 1px;
-}
-
-@keyframes shimmer-text {
-    0%   { background-position: 200% center; }
-    100% { background-position: -200% center; }
+    letter-spacing: 1.5px;
 }
 
 .magic-header-inner .subtitle {
-    font-size: 0.95rem;
-    margin: 6px 0 0 0;
-    color: #88aadd;
-    letter-spacing: 2px;
+    font-size: 1.05rem;
+    color: #94a3b8;
+    letter-spacing: 3px;
     text-transform: uppercase;
     font-weight: 600;
 }
 
-/* Floating particles inside header */
-.particle {
-    position: absolute;
-    border-radius: 50%;
-    animation: float-up 3s ease-in infinite;
-    opacity: 0;
-}
-.p1 { width:6px; height:6px; background:#00cfff; left:10%; animation-delay:0s; }
-.p2 { width:4px; height:4px; background:#ff0080; left:25%; animation-delay:0.8s; }
-.p3 { width:5px; height:5px; background:#ffd700; left:50%; animation-delay:1.5s; }
-.p4 { width:3px; height:3px; background:#00ff88; left:75%; animation-delay:0.4s; }
-.p5 { width:6px; height:6px; background:#7f5fff; left:90%; animation-delay:1.2s; }
-
-@keyframes float-up {
-    0%   { opacity:0; transform: translateY(30px) scale(0); }
-    20%  { opacity:1; }
-    80%  { opacity:0.5; }
-    100% { opacity:0; transform: translateY(-20px) scale(1.5); }
-}
-
-/* ── METRIC CARDS ── */
+/* ── Modern Metric Cards (Glass + Shadow) ── */
 .metric-card {
-    background: white;
-    border-radius: 12px;
-    padding: 16px 20px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.12);
-    border-left: 5px solid;
+    background: rgba(255,255,255,0.95);
+    border-radius: 16px;
+    padding: 20px 24px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+    border: 1px solid rgba(148,163,184,0.15);
     text-align: center;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: all 0.3s ease;
 }
 .metric-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.18);
+    transform: translateY(-6px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.18);
 }
-.metric-card .val  { font-size: 2.4rem; font-weight: 800; line-height: 1.1; }
-.metric-card .lbl  { font-size: 0.82rem; color: #666; margin-top: 4px; font-weight: 600; }
-.card-blue   { border-color: #2E75B6; color: #2E75B6; }
-.card-green  { border-color: #70AD47; color: #70AD47; }
-.card-orange { border-color: #FFC000; color: #FFC000; }
-.card-red    { border-color: #FF0000; color: #FF0000; }
-.card-purple { border-color: #7030A0; color: #7030A0; }
-
-/* ── SHIFT BADGE ── */
-.shift-badge {
-    display:inline-block; padding:3px 12px; border-radius:14px;
-    font-size:0.8rem; font-weight:700; color:white;
+.metric-card .val {
+    font-size: 2.8rem;
+    font-weight: 800;
+    line-height: 1;
+    color: #1e40af;
+}
+.metric-card .lbl {
+    font-size: 0.85rem;
+    color: #475569;
+    margin-top: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
     letter-spacing: 0.5px;
 }
-.s1 { background: linear-gradient(135deg, #FFC000, #FF8C00); color:#000; }
-.s2 { background: linear-gradient(135deg, #70AD47, #3d8b20); }
-.s3 { background: linear-gradient(135deg, #2E75B6, #1a4d8a); }
-.leave-badge { background: linear-gradient(135deg, #FF4444, #cc0000); }
 
-/* ── SECTION TITLE ── */
-.section-title {
-    font-size:1.1rem; font-weight:700; color:#1F3864;
-    border-bottom:3px solid #2E75B6; padding-bottom:6px;
-    margin:20px 0 12px 0;
+/* ── Shift Badges ── */
+.shift-badge {
+    padding: 6px 16px;
+    border-radius: 9999px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: white;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
 
-/* ── RUN BUTTON ── */
+/* ── Button Improvements ── */
 .run-btn button {
-    background: linear-gradient(135deg,#1F3864,#2E75B6) !important;
-    color: white !important; font-weight:700 !important;
-    font-size:1rem !important; border-radius:8px !important;
-    padding: 10px 24px !important; width:100%;
-    transition: all 0.2s ease !important;
+    background: linear-gradient(135deg, #1e40af, #3b82f6) !important;
+    color: white !important;
+    font-weight: 700 !important;
+    font-size: 1.1rem !important;
+    padding: 14px 32px !important;
+    border-radius: 12px !important;
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4) !important;
+    transition: all 0.3s ease !important;
 }
 .run-btn button:hover {
-    background: linear-gradient(135deg,#2E75B6,#1F3864) !important;
-    transform: translateY(-1px) !important;
+    transform: translateY(-3px) scale(1.03);
+    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.5) !important;
 }
 
-/* ── DOWNLOAD BUTTON ── */
-.download-btn {
-    display: inline-block;
-    background: linear-gradient(135deg, #16a34a, #15803d);
-    color: white !important;
-    font-weight: 700;
-    font-size: 0.85rem;
-    border-radius: 8px;
-    padding: 8px 18px;
-    text-decoration: none;
-    border: none;
-    cursor: pointer;
-    box-shadow: 0 3px 10px rgba(22,163,74,0.3);
-    transition: all 0.2s ease;
-    margin: 4px;
+/* ── Tabs Styling ── */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 8px;
 }
-.download-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(22,163,74,0.4);
-}
-
-/* ── SIDEBAR CLOCK ── */
-.clock-box {
-    background: linear-gradient(135deg, #0d1b3e, #1a2d5a);
+.stTabs [data-baseweb="tab"] {
     border-radius: 12px;
-    padding: 14px 16px;
-    text-align: center;
-    border: 1px solid #2E75B6;
-    box-shadow: 0 0 20px rgba(46,117,182,0.3);
-    margin-top: 8px;
+    padding: 12px 24px;
+    font-weight: 600;
 }
-.clock-date {
-    font-size: 1rem;
-    font-weight: 700;
-    color: #ffd700;
-    margin-bottom: 4px;
+
+/* ── Sidebar Clock Modern Look ── */
+.clock-box {
+    background: linear-gradient(145deg, #1e3a8a, #312e81);
+    border-radius: 16px;
+    padding: 18px;
+    border: 1px solid #60a5fa;
+    box-shadow: 0 0 25px rgba(96, 165, 250, 0.3);
 }
 .clock-time {
-    font-size: 1.6rem;
+    font-size: 2rem;
     font-weight: 900;
-    color: #00cfff;
-    font-family: 'Rajdhani', monospace;
-    letter-spacing: 2px;
-}
-.clock-label {
-    font-size: 0.7rem;
-    color: #88aadd;
-    margin-top: 2px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
+    color: #67e8f9;
+    letter-spacing: 3px;
 }
 </style>
 """, unsafe_allow_html=True)
-
 # ── Google Sheet Connection ───────────────────────────────────────────────────
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
