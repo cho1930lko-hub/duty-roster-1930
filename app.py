@@ -5,7 +5,8 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime, date
 import json
 import io
-import pytz
+from zoneinfo import ZoneInfo
+
 
 # ✅ STEP 1: set_page_config SABSE PEHLE
 st.set_page_config(
@@ -16,7 +17,7 @@ st.set_page_config(
 )
 
 # ── India/Kolkata timezone (Lucknow local time) ───────────────────────────────
-IST = pytz.timezone("Asia/Kolkata")
+IST = ZoneInfo("Asia/Kolkata")
 
 def now_ist():
     return datetime.now(IST)
