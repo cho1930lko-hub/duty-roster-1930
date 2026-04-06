@@ -190,6 +190,31 @@ html, body, [class*="css"] {
     color: #67e8f9;
     letter-spacing: 3px;
 }
+/* ── सुंदर Download Buttons ── */
+div[data-testid="stDownloadButton"] button {
+    background: linear-gradient(135deg, #166534, #4ade80) !important;
+    color: white !important;
+    font-weight: 700 !important;
+    font-size: 0.97rem !important;
+    padding: 12px 22px !important;
+    border-radius: 14px !important;
+    box-shadow: 0 6px 18px rgba(74, 222, 128, 0.4) !important;
+    border: none !important;
+    transition: all 0.35s ease !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+div[data-testid="stDownloadButton"] button:hover {
+    transform: translateY(-4px) scale(1.03) !important;
+    box-shadow: 0 12px 28px rgba(74, 222, 128, 0.55) !important;
+    background: linear-gradient(135deg, #14532d, #22c55e) !important;
+}
+
+/* Download बटन के अंदर का आइकन भी सुंदर करें */
+div[data-testid="stDownloadButton"] button svg {
+    color: white !important;
+}
 </style>
 """, unsafe_allow_html=True)
 # ── Google Sheet Connection ───────────────────────────────────────────────────
