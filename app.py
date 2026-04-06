@@ -245,6 +245,38 @@ div[data-testid="stHorizontalBlock"] p {
     color: #475569 !important;
     font-weight: 600 !important;
 }
+/* ── बेहतर Shift Cards ── */
+.shift-card {
+    background: linear-gradient(145deg, #f8fafc, #f1f5f9) !important;
+    border: 2px solid #bfdbfe !important;
+    border-radius: 16px !important;
+    padding: 20px 16px !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08) !important;
+    transition: all 0.4s ease !important;
+    min-height: 180px;
+}
+
+.shift-card:hover {
+    transform: translateY(-8px) !important;
+    box-shadow: 0 15px 40px rgba(59, 130, 246, 0.25) !important;
+    border-color: #3b82f6 !important;
+}
+
+.shift-card .shift-number {
+    font-size: 3.2rem !important;
+    font-weight: 800 !important;
+    color: #1e40af !important;
+    line-height: 1 !important;
+    margin-bottom: 6px !important;
+}
+
+.shift-card .shift-label {
+    font-size: 0.95rem !important;
+    color: #475569 !important;
+    font-weight: 600 !important;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
 </style>
 """, unsafe_allow_html=True)
 # ── Google Sheet Connection ───────────────────────────────────────────────────
