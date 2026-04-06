@@ -15,7 +15,7 @@ st.set_page_config(
 )
 
 # ── India/Kolkata timezone (Lucknow local time) ───────────────────────────────
-IST = pytz.timezone("Asia/Kolkata")
+IST = ZoneInfo("Asia/Kolkata")
 
 def now_ist():
     return datetime.now(IST)
