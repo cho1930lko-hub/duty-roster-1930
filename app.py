@@ -215,6 +215,36 @@ div[data-testid="stDownloadButton"] button:hover {
 div[data-testid="stDownloadButton"] button svg {
     color: white !important;
 }
+/* ── सुंदर Shift Cards ── */
+div[data-testid="stHorizontalBlock"] > div > div > div > div {
+    background: linear-gradient(145deg, #f8fafc, #f1f5f9) !important;
+    border-radius: 16px !important;
+    border: 2px solid #e2e8f0 !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08) !important;
+    padding: 20px 16px !important;
+    transition: all 0.3s ease !important;
+}
+
+div[data-testid="stHorizontalBlock"] > div > div > div > div:hover {
+    transform: translateY(-6px) !important;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12) !important;
+    border-color: #3b82f6 !important;
+}
+
+/* Card के अंदर का नंबर बड़ा और बोल्ड */
+div[data-testid="stHorizontalBlock"] h2 {
+    font-size: 2.8rem !important;
+    font-weight: 800 !important;
+    color: #1e40af !important;
+    margin-bottom: 4px !important;
+}
+
+/* "कर्मचारी" लेबल */
+div[data-testid="stHorizontalBlock"] p {
+    font-size: 0.95rem !important;
+    color: #475569 !important;
+    font-weight: 600 !important;
+}
 </style>
 """, unsafe_allow_html=True)
 # ── Google Sheet Connection ───────────────────────────────────────────────────
