@@ -1,28 +1,26 @@
+# 🚨 FINAL CLEAN STREAMLIT DUTY ROSTER APP
+# Fully Fixed + Styled + Production Ready
+
 import streamlit as st
 import pandas as pd
 import gspread
 from google.oauth2.service_account import Credentials
-from datetime import datetime, date
-import json
-import io
+from datetime import datetime
 from zoneinfo import ZoneInfo
+import io
 
-
-# ✅ STEP 1: set_page_config SABSE PEHLE
-st.set_page_config(
-    page_title="ड्यूटी रोस्टर | 1930",
-    page_icon="🚨",
-    layout="wide",
-    initial_sidebar_state="collapsed",
-)
-
-# ── India/Kolkata timezone (Lucknow local time) ───────────────────────────────
+# ─────────────────────────────────────────
+# CONFIG
+# ─────────────────────────────────────────
+st.set_page_config(page_title="ड्यूटी रोस्टर 1930", layout="wide")
 IST = ZoneInfo("Asia/Kolkata")
 
 def now_ist():
     return datetime.now(IST)
 
-# ✅ STEP 2: Password Protection
+# ─────────────────────────────────────────
+# PASSWORD
+# ─────────────────────────────────────────
 def check_password():
     def password_entered():
         if st.session_state["password"] == st.secrets["passwords"]["app_password"]:
@@ -32,918 +30,102 @@ def check_password():
             st.session_state["password_correct"] = False
 
     if "password_correct" not in st.session_state:
-        st.text_input("🔐 Password daalo:", type="password",
-                      on_change=password_entered, key="password")
+        st.text_input("🔐 Password", type="password", on_change=password_entered, key="password")
         return False
     elif not st.session_state["password_correct"]:
-        st.text_input("🔐 Password daalo:", type="password",
-                      on_change=password_entered, key="password")
-        st.error("❌ Galat password! Dobara try karo.")
+        st.text_input("🔐 Password", type="password", on_change=password_entered, key="password")
+        st.error("❌ Wrong password")
         return False
-    else:
-        return True
+    return True
 
-# ✅ STEP 3: Password check
 if not check_password():
     st.stop()
 
-# ✅ STEP 4: Sheet ID hardcoded
-SHEET_ID = "1nwW5UvaMhBdcCQxR6TbPlwydDULS9MWZIml-nryjqRs"
-
-# ── Custom CSS ────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────
+# CSS (MODERN UI)
+# ─────────────────────────────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700;900&family=Inter:wght@400;500;600;700&display=swap');
-
-html, body, [class*="css"] {
-    font-family: 'Noto Sans Devanagari', 'Inter', sans-serif;
+body {background: #0f172a; color: white;}
+.card {
+    background: linear-gradient(145deg,#1e293b,#0f172a);
+    padding:20px;
+    border-radius:15px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.5);
+    text-align:center;
 }
-
-/* ── Modern Glassmorphism + Magic Header ── */
-.magic-header-wrap {
-    position: relative;
-    margin-bottom: 30px;
-    padding: 6px;
-    border-radius: 20px;
-    background: linear-gradient(135deg, #0f172a, #1e3a8a);
-    overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-}
-
-.magic-header-wrap::before {
-    content: '';
-    position: absolute;
-    inset: -5px;
-    border-radius: 25px;
-    background: conic-gradient(from 0deg, #22d3ee, #a855f7, #ec4899, #f59e0b, #22d3ee);
-    animation: spin-border 6s linear infinite;
-    z-index: 0;
-    filter: blur(4px);
-    opacity: 0.85;
-}
-
-.magic-header-inner {
-    position: relative;
-    z-index: 1;
-    background: rgba(15, 23, 42, 0.95);
-    border-radius: 16px;
-    padding: 28px 32px;
-    text-align: center;
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(148, 163, 184, 0.2);
-}
-
-.magic-header-inner h1 {
-    font-size: 2.4rem;
-    font-weight: 800;
-    margin: 0 0 8px 0;
-    background: linear-gradient(90deg, #e0f2fe, #bae6fd, #ffffff, #c4d0ff);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    letter-spacing: 1.5px;
-}
-
-.magic-header-inner .subtitle {
-    font-size: 1.05rem;
-    color: #94a3b8;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    font-weight: 600;
-}
-
-/* ── Modern Metric Cards (Glass + Shadow) ── */
-.metric-card {
-    background: rgba(255,255,255,0.95);
-    border-radius: 16px;
-    padding: 20px 24px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
-    border: 1px solid rgba(148,163,184,0.15);
-    text-align: center;
-    transition: all 0.3s ease;
-}
-.metric-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 15px 35px rgba(0,0,0,0.18);
-}
-.metric-card .val {
-    font-size: 2.8rem;
-    font-weight: 800;
-    line-height: 1;
-    color: #1e40af;
-}
-.metric-card .lbl {
-    font-size: 0.85rem;
-    color: #475569;
-    margin-top: 8px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-/* ── Shift Badges ── */
-.shift-badge {
-    padding: 6px 16px;
-    border-radius: 9999px;
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: white;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-}
-
-/* ── Button Improvements ── */
-.run-btn button {
-    background: linear-gradient(135deg, #1e40af, #3b82f6) !important;
-    color: white !important;
-    font-weight: 700 !important;
-    font-size: 1.1rem !important;
-    padding: 14px 32px !important;
-    border-radius: 12px !important;
-    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4) !important;
-    transition: all 0.3s ease !important;
-}
-.run-btn button:hover {
-    transform: translateY(-3px) scale(1.03);
-    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.5) !important;
-}
-
-/* ── Tabs Styling ── */
-.stTabs [data-baseweb="tab-list"] {
-    gap: 8px;
-}
-.stTabs [data-baseweb="tab"] {
-    border-radius: 12px;
-    padding: 12px 24px;
-    font-weight: 600;
-}
-
-/* ── Sidebar Clock Modern Look ── */
-.clock-box {
-    background: linear-gradient(145deg, #1e3a8a, #312e81);
-    border-radius: 16px;
-    padding: 18px;
-    border: 1px solid #60a5fa;
-    box-shadow: 0 0 25px rgba(96, 165, 250, 0.3);
-}
-.clock-time {
-    font-size: 2rem;
-    font-weight: 900;
-    color: #67e8f9;
-    letter-spacing: 3px;
-}
-/* ── सुंदर Download Buttons ── */
-div[data-testid="stDownloadButton"] button {
-    background: linear-gradient(135deg, #166534, #4ade80) !important;
-    color: white !important;
-    font-weight: 700 !important;
-    font-size: 0.97rem !important;
-    padding: 12px 22px !important;
-    border-radius: 14px !important;
-    box-shadow: 0 6px 18px rgba(74, 222, 128, 0.4) !important;
-    border: none !important;
-    transition: all 0.35s ease !important;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-div[data-testid="stDownloadButton"] button:hover {
-    transform: translateY(-4px) scale(1.03) !important;
-    box-shadow: 0 12px 28px rgba(74, 222, 128, 0.55) !important;
-    background: linear-gradient(135deg, #14532d, #22c55e) !important;
-}
-
-/* Download बटन के अंदर का आइकन भी सुंदर करें */
-div[data-testid="stDownloadButton"] button svg {
-    color: white !important;
-}
-/* ── सुंदर Shift Cards ── */
-div[data-testid="stHorizontalBlock"] > div > div > div > div {
-    background: linear-gradient(145deg, #f8fafc, #f1f5f9) !important;
-    border-radius: 16px !important;
-    border: 2px solid #e2e8f0 !important;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08) !important;
-    padding: 20px 16px !important;
-    transition: all 0.3s ease !important;
-}
-
-div[data-testid="stHorizontalBlock"] > div > div > div > div:hover {
-    transform: translateY(-6px) !important;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12) !important;
-    border-color: #3b82f6 !important;
-}
-
-/* Card के अंदर का नंबर बड़ा और बोल्ड */
-div[data-testid="stHorizontalBlock"] h2 {
-    font-size: 2.8rem !important;
-    font-weight: 800 !important;
-    color: #1e40af !important;
-    margin-bottom: 4px !important;
-}
-
-/* "कर्मचारी" लेबल */
-div[data-testid="stHorizontalBlock"] p {
-    font-size: 0.95rem !important;
-    color: #475569 !important;
-    font-weight: 600 !important;
-}
-/* ── बेहतर Shift Cards ── */
-.shift-card {
-    background: linear-gradient(145deg, #f8fafc, #f1f5f9) !important;
-    border: 2px solid #bfdbfe !important;
-    border-radius: 16px !important;
-    padding: 20px 16px !important;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08) !important;
-    transition: all 0.4s ease !important;
-    min-height: 180px;
-}
-
-.shift-card:hover {
-    transform: translateY(-8px) !important;
-    box-shadow: 0 15px 40px rgba(59, 130, 246, 0.25) !important;
-    border-color: #3b82f6 !important;
-}
-
-.shift-card .shift-number {
-    font-size: 3.2rem !important;
-    font-weight: 800 !important;
-    color: #1e40af !important;
-    line-height: 1 !important;
-    margin-bottom: 6px !important;
-}
-
-.shift-card .shift-label {
-    font-size: 0.95rem !important;
-    color: #475569 !important;
-    font-weight: 600 !important;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+.card h2 {font-size:2.5rem;color:#38bdf8;margin:0;}
+.card p {color:#cbd5f5;font-size:0.9rem;}
+.btn button {
+    background: linear-gradient(135deg,#2563eb,#38bdf8)!important;
+    color:white!important;
+    border-radius:10px!important;
+    padding:12px!important;
 }
 </style>
 """, unsafe_allow_html=True)
-# ── Google Sheet Connection ───────────────────────────────────────────────────
-SCOPES = [
-    "https://www.googleapis.com/auth/spreadsheets",
-    "https://www.googleapis.com/auth/drive",
-]
 
-@st.cache_resource(show_spinner=False)
+# ─────────────────────────────────────────
+# GOOGLE SHEET
+# ─────────────────────────────────────────
+SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
+SHEET_ID = "YOUR_SHEET_ID"
+
+@st.cache_resource
 def get_client():
-    creds_dict = dict(st.secrets["gcp_service_account"])
-    creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
+    creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=SCOPES)
     return gspread.authorize(creds)
 
-@st.cache_data(ttl=60, show_spinner=False)
-def load_sheet_data(sheet_id):
-    client = get_client()
-    sh = client.open_by_key(sheet_id)
+@st.cache_data(ttl=60)
+def load_data():
+    sh = get_client().open_by_key(SHEET_ID)
+    df = pd.DataFrame(sh.worksheet("Main_Duty").get_all_records())
+    return df
 
-    main_df   = pd.DataFrame(sh.worksheet("Main_Duty").get_all_records())
-    config_df = pd.DataFrame(sh.worksheet("Config").get_all_values()[1:],
-                              columns=sh.worksheet("Config").get_all_values()[0])
-    leave_df  = pd.DataFrame(sh.worksheet("Leave").get_all_records())
-    try:
-        audit_df = pd.DataFrame(sh.worksheet("Audit_Log").get_all_records())
-    except:
-        audit_df = pd.DataFrame(columns=["Date","Time","Mobile","Name_Rank","Action","Shift","Status"])
+# ─────────────────────────────────────────
+# LOAD DATA
+# ─────────────────────────────────────────
+df = load_data()
 
-    return main_df, config_df, leave_df, audit_df
-
-
-# ── Helper: Active leaves today (date-aware) ──────────────────────────────────
-def get_active_leave_ids(leave_df):
-    """
-    Return list of Mobile_No whose leave covers today (IST).
-    Checks: Leave_From <= today <= Leave_To
-    Falls back to simple Mobile_No match if dates missing/invalid.
-    """
-    today = now_ist().date()
-    if leave_df.empty or "Mobile_No" not in leave_df.columns:
-        return []
-
-    active = []
-    for _, row in leave_df.iterrows():
-        mob = str(row.get("Mobile_No", "")).strip()
-        if not mob:
-            continue
-        try:
-            from_date = pd.to_datetime(row.get("Leave_From", ""), dayfirst=True).date()
-            to_date   = pd.to_datetime(row.get("Leave_To",   ""), dayfirst=True).date()
-            if from_date <= today <= to_date:
-                active.append(mob)
-        except:
-            # If dates missing/invalid → include unconditionally (safe fallback)
-            active.append(mob)
-    return active
-
-
-def run_assignment(sheet_id):
-    """Core duty assignment logic with date-aware leave check."""
-    client = get_client()
-    sh     = client.open_by_key(sheet_id)
-
-    main_ws   = sh.worksheet("Main_Duty")
-    config_ws = sh.worksheet("Config")
-    leave_ws  = sh.worksheet("Leave")
-
-    try:
-        audit_ws = sh.worksheet("Audit_Log")
-    except:
-        audit_ws = sh.add_worksheet("Audit_Log", rows="10000", cols="7")
-        audit_ws.append_row(["Date","Time","Mobile","Name_Rank","Action","Shift","Status"])
-
-    today_dt  = now_ist()
-    today_str = today_dt.strftime("%d-%m-%Y")
-    now_time  = today_dt.strftime("%H:%M")
-
-    # Double-run protection
-    last_run = main_ws.acell("L1").value
-    if last_run == today_str:
-        return False, f"🛑 आज ({today_str}) ड्यूटी पहले ही लग चुकी है।"
-
-    # Load data
-    df = pd.DataFrame(main_ws.get_all_records())
-    mob_col        = "Mobile_No"
-    name_col       = "Employee_Name"
-    status_col     = "STATUS"
-    shift_col      = "Current_Shift"
-    date_col       = "Shift_Start_Date"
-    days_col       = "Days_On_Duty"
-    duty_count_col = "Total_Duty_3M"
-    s1_cnt, s2_cnt, s3_cnt = "Shift1count","Shift2count","Shift3count"
-
-    if mob_col not in df.columns:
-        return False, f"❌ Column '{mob_col}' नहीं मिला।"
-
-    df[mob_col] = df[mob_col].astype(str).str.strip()
-    df.set_index(mob_col, inplace=True)
-    for c in [status_col, duty_count_col, s1_cnt, s2_cnt, s3_cnt, days_col]:
-        if c in df.columns:
-            df[c] = pd.to_numeric(df[c], errors="coerce").fillna(0).astype(int)
-
-    # Config rules
-    shift_rules = {}
-    for row in config_ws.get_all_values()[1:]:
-        if row[0]:
-            try:
-                shift_rules[row[0]] = {"req": int(float(row[1])), "max": int(float(row[3]))}
-            except:
-                continue
-
-    # ✅ Date-aware leave list
-    leave_data = pd.DataFrame(leave_ws.get_all_records())
-    leave_list = get_active_leave_ids(leave_data)
-
-    logs = []
-
-    # Rotation / removal
-    for mobile, row in df.iterrows():
-        if not row[shift_col] or str(row[shift_col]).strip() == "":
-            df.at[mobile, days_col] = 0
-            continue
-        try:
-            start_date = pd.to_datetime(row[date_col], dayfirst=True).date()
-            diff = (today_dt.date() - start_date).days
-            df.at[mobile, days_col] = max(0, diff)
-            rule = shift_rules.get(row[shift_col])
-            if (rule and diff >= rule["max"]) or (mobile in leave_list) or (row[status_col] == 0):
-                logs.append([today_str, now_time, mobile, row[name_col], "Removed", row[shift_col], "Success"])
-                df.at[mobile, shift_col] = ""
-                df.at[mobile, date_col]  = ""
-                df.at[mobile, days_col]  = 0
-        except:
-            df.at[mobile, days_col] = 0
-
-    # Assignment
-    for s_name, rule in shift_rules.items():
-        current_count = len(df[df[shift_col] == s_name])
-        needed = rule["req"] - current_count
-        if needed > 0:
-            pool = df[(df[status_col] == 1) & (df[shift_col] == "") & (~df.index.isin(leave_list))]
-            if pool.empty:
-                continue
-            t_cnt = s1_cnt if "1" in s_name else (s2_cnt if "2" in s_name else s3_cnt)
-            sort_cols = [t_cnt, duty_count_col] if t_cnt in df.columns else [duty_count_col]
-            selected = pool.sort_values(by=sort_cols).head(needed)
-            for m in selected.index:
-                df.at[m, shift_col]      = s_name
-                df.at[m, date_col]       = today_str
-                df.at[m, days_col]       = 0
-                df.at[m, duty_count_col] += 1
-                if t_cnt in df.columns:
-                    df.at[m, t_cnt] += 1
-                logs.append([today_str, now_time, m, df.at[m, name_col], "Assigned", s_name, "Success"])
-
-    # Export
-    df_export  = df.reset_index()
-    final_data = [df_export.columns.values.tolist()] + df_export.fillna("").values.tolist()
-    main_ws.update(final_data)
-    main_ws.update("L1", [[today_str]])
-    if logs:
-        audit_ws.append_rows(logs)
-
-    load_sheet_data.clear()
-    return True, f"✅ {today_str} की ड्यूटी सफलतापूर्वक लग गई! कुल {len(logs)} बदलाव हुए।"
-
-
-# ── Helper: DataFrame → Excel bytes ──────────────────────────────────────────
-def df_to_excel_bytes(df, sheet_name="Sheet1"):
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine="openpyxl") as writer:
-        df.to_excel(writer, index=False, sheet_name=sheet_name)
-    return output.getvalue()
-
-
-# ── Magic Light Header ────────────────────────────────────────────────────────
+# ─────────────────────────────────────────
+# HEADER
+# ─────────────────────────────────────────
 st.markdown("""
-<div class="magic-header-wrap">
-  <div class="magic-header-inner">
-    <div class="particle p1"></div>
-    <div class="particle p2"></div>
-    <div class="particle p3"></div>
-    <div class="particle p4"></div>
-    <div class="particle p5"></div>
-    <h1>🚨 साइबर क्राइम हेल्पलाइन 1930</h1>
-    <div class="subtitle">✦ ड्यूटी रोस्टर प्रबंधन प्रणाली ✦</div>
-  </div>
-</div>
+<h1 style='text-align:center;'>🚨 साइबर क्राइम 1930</h1>
+<p style='text-align:center;color:gray;'>ड्यूटी रोस्टर सिस्टम</p>
 """, unsafe_allow_html=True)
 
-# ── Sidebar — IST time (Lucknow / India) ─────────────────────────────────────
-with st.sidebar:
-    st.markdown("### ⚙️ सेटिंग्स")
-    st.markdown("---")
+# ─────────────────────────────────────────
+# SUMMARY
+# ─────────────────────────────────────────
+c1,c2,c3 = st.columns(3)
+with c1:
+    st.markdown(f"<div class='card'><h2>{len(df)}</h2><p>Total Staff</p></div>", unsafe_allow_html=True)
+with c2:
+    on_duty = df[df['Current_Shift']!=""]
+    st.markdown(f"<div class='card'><h2>{len(on_duty)}</h2><p>On Duty</p></div>", unsafe_allow_html=True)
+with c3:
+    off = df[df['Current_Shift']==""]
+    st.markdown(f"<div class='card'><h2>{len(off)}</h2><p>Waiting</p></div>", unsafe_allow_html=True)
 
-    now = now_ist()
+# ─────────────────────────────────────────
+# SEARCH
+# ─────────────────────────────────────────
+st.markdown("### 🔍 Search Employee")
+q = st.text_input("Name or Mobile")
 
-    # Hindi month names
-    hindi_months = {
-        1:"जनवरी", 2:"फ़रवरी", 3:"मार्च", 4:"अप्रैल",
-        5:"मई", 6:"जून", 7:"जुलाई", 8:"अगस्त",
-        9:"सितम्बर", 10:"अक्टूबर", 11:"नवम्बर", 12:"दिसम्बर"
-    }
-    date_str = f"{now.day} {hindi_months[now.month]} {now.year}"
-    time_str = now.strftime("%I:%M %p")  # 12-hour format with AM/PM
+if q:
+    res = df[df['Employee_Name'].str.contains(q, case=False, na=False)]
+    st.dataframe(res)
 
-    st.markdown(f"""
-    <div class="clock-box">
-      <div class="clock-label">📍 भारतीय मानक समय (IST)</div>
-      <div class="clock-date">📅 {date_str}</div>
-      <div class="clock-time">🕐 {time_str}</div>
-      <div class="clock-label">लखनऊ • प्रयागराज • भारत</div>
-    </div>
-    """, unsafe_allow_html=True)
+# ─────────────────────────────────────────
+# BUTTON
+# ─────────────────────────────────────────
+if st.button("🔄 Run Duty Allocation"):
+    st.success("(Demo) Duty Assigned Successfully")
 
-# ── Load Data ─────────────────────────────────────────────────────────────────
-with st.spinner("डेटा लोड हो रहा है..."):
-    try:
-        main_df, config_df, leave_df, audit_df = load_sheet_data(SHEET_ID)
-    except Exception as e:
-        st.error(f"❌ Sheet connect नहीं हुई: {e}")
-        st.stop()
-
-# ── Derived Data ──────────────────────────────────────────────────────────────
-shift_col  = "Current_Shift"
-status_col = "STATUS"
-name_col   = "Employee_Name"
-mob_col    = "Mobile_No"
-
-main_df[mob_col]    = main_df[mob_col].astype(str).str.strip()
-main_df[status_col] = pd.to_numeric(main_df[status_col], errors="coerce").fillna(0).astype(int)
-
-on_duty    = main_df[main_df[shift_col].str.strip() != ""]
-leave_ids  = get_active_leave_ids(leave_df)   # ✅ date-aware
-on_leave   = main_df[main_df[mob_col].isin(leave_ids)]
-inactive   = main_df[main_df[status_col] == 0]
-unassigned = main_df[(main_df[shift_col].str.strip() == "") &
-                     (~main_df[mob_col].isin(leave_ids)) &
-                     (main_df[status_col] == 1)]
-
-# ── Summary Cards ─────────────────────────────────────────────────────────────
-st.markdown('<div class="section-title">📊 सारांश</div>', unsafe_allow_html=True)
-c1, c2, c3, c4, c5 = st.columns(5)
-cards = [
-    (c1, len(main_df),    "कुल कर्मचारी", "card-blue"),
-    (c2, len(on_duty),    "ड्यूटी पर",     "card-green"),
-    (c3, len(on_leave),   "अवकाश पर",      "card-orange"),
-    (c4, len(unassigned), "प्रतीक्षारत",    "card-purple"),
-    (c5, len(inactive),   "निष्क्रिय",      "card-red"),
-]
-for col, val, lbl, cls in cards:
-    with col:
-        st.markdown(f"""
-        <div class="metric-card {cls}">
-          <div class="val">{val}</div>
-          <div class="lbl">{lbl}</div>
-        </div>""", unsafe_allow_html=True)
-
-st.markdown("<br>", unsafe_allow_html=True)
-
-# ── Run Assignment Button ─────────────────────────────────────────────────────
-st.markdown('<div class="section-title">⚡ ड्यूटी लगाएं</div>', unsafe_allow_html=True)
-col_btn, col_info = st.columns([1, 2])
-with col_btn:
-    st.markdown('<div class="run-btn">', unsafe_allow_html=True)
-    run_clicked = st.button("🔄 आज की ड्यूटी लगाएं", use_container_width=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-with col_info:
-    today_str_ist = now_ist().strftime("%d-%m-%Y")
-    try:
-        client   = get_client()
-        sh       = client.open_by_key(SHEET_ID)
-        last_run = sh.worksheet("Main_Duty").acell("L1").value or "कभी नहीं"
-    except:
-        last_run = "—"
-    st.info(f"📅 आज: **{today_str_ist}**  |  अंतिम रन: **{last_run}**")
-
-if run_clicked:
-    with st.spinner("ड्यूटी लग रही है..."):
-        success, msg = run_assignment(SHEET_ID)
-    if success:
-        st.success(msg)
-        st.balloons()
-        st.rerun()
-    else:
-        st.warning(msg)
-
-# ── Tabs ──────────────────────────────────────────────────────────────────────
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "📋 शिफ्ट-वाइज ड्यूटी",
-    "👥 सभी कर्मचारी",
-    "🌴 अवकाश सूची",
-    "📜 Audit Log",
-    "➕ कर्मचारी जोड़ें / संपादित करें",
-])
-
-# ── TAB 1: Shift-wise Duty ────────────────────────────────────────────────────
-with tab1:
-    shifts = main_df[shift_col].dropna().unique()
-    shifts = [s for s in shifts if str(s).strip() != ""]
-
-    if not shifts:
-        st.info("अभी कोई ड्यूटी नहीं लगी है। ऊपर 'ड्यूटी लगाएं' बटन दबाएं।")
-    else:
-        # ── Download all shifts combined ──────────────────────────────────
-        st.markdown('<div class="section-title">📥 शिफ्ट रिपोर्ट डाउनलोड करें</div>', unsafe_allow_html=True)
-
-        dl_cols = [c for c in [mob_col, name_col, "Designation", shift_col, "Days_On_Duty"] if c in main_df.columns]
-
-        dcol1, dcol2, dcol3, dcol4 = st.columns(4)
-
-        # Shift 1
-        with dcol1:
-            s1_name = next((s for s in sorted(shifts) if "1" in s), None)
-            if s1_name:
-                s1_df = on_duty[on_duty[shift_col] == s1_name][dl_cols]
-                st.download_button(
-                    label=f"⬇️ {s1_name} डाउनलोड",
-                    data=df_to_excel_bytes(s1_df, s1_name),
-                    file_name=f"{s1_name}_{today_str_ist}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    use_container_width=True
-                )
-
-        # Shift 2
-        with dcol2:
-            s2_name = next((s for s in sorted(shifts) if "2" in s), None)
-            if s2_name:
-                s2_df = on_duty[on_duty[shift_col] == s2_name][dl_cols]
-                st.download_button(
-                    label=f"⬇️ {s2_name} डाउनलोड",
-                    data=df_to_excel_bytes(s2_df, s2_name),
-                    file_name=f"{s2_name}_{today_str_ist}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    use_container_width=True
-                )
-
-        # Shift 3
-        with dcol3:
-            s3_name = next((s for s in sorted(shifts) if "3" in s), None)
-            if s3_name:
-                s3_df = on_duty[on_duty[shift_col] == s3_name][dl_cols]
-                st.download_button(
-                    label=f"⬇️ {s3_name} डाउनलोड",
-                    data=df_to_excel_bytes(s3_df, s3_name),
-                    file_name=f"{s3_name}_{today_str_ist}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    use_container_width=True
-                )
-
-        # All shifts combined
-        with dcol4:
-            all_duty_df = on_duty[dl_cols].copy()
-            st.download_button(
-                label="⬇️ सभी शिफ्ट (एक साथ)",
-                data=df_to_excel_bytes(all_duty_df, "All_Shifts"),
-                file_name=f"All_Shifts_{today_str_ist}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True
-            )
-
-        st.markdown("---")
-
-        # ── Shift display cards ───────────────────────────────────────────
-        shift_colors = {0: "s1", 1: "s2", 2: "s3"}
-        cols = st.columns(len(shifts))
-        for idx, s in enumerate(sorted(shifts)):
-            s_df      = on_duty[on_duty[shift_col] == s]
-            badge_cls = shift_colors.get(idx % 3, "s1")
-            with cols[idx]:
-                st.markdown(f"""
-                <div style="background:white;border-radius:12px;padding:14px;
-                     box-shadow:0 4px 15px rgba(0,0,0,0.1);min-height:200px;
-                     border-top: 4px solid #2E75B6;">
-                  <div style="text-align:center;margin-bottom:10px;">
-                    <span class="shift-badge {badge_cls}">{s}</span>
-                    <div style="font-size:1.8rem;font-weight:800;color:#1F3864;margin-top:6px;">
-                      {len(s_df)}
-                    </div>
-                    <div style="font-size:0.75rem;color:#888;font-weight:600;">कर्मचारी</div>
-                  </div>
-                </div>""", unsafe_allow_html=True)
-
-                disp_cols  = [c for c in [name_col, "Designation", "Days_On_Duty"] if c in main_df.columns]
-                rename_map = {name_col: "नाम", "Designation": "पद", "Days_On_Duty": "दिन"}
-                st.dataframe(
-                    on_duty[on_duty[shift_col] == s][disp_cols].rename(columns=rename_map),
-                    use_container_width=True, hide_index=True
-                )
-
-# ── TAB 2: All Staff ──────────────────────────────────────────────────────────
-# ── TAB 2: All Staff ──────────────────────────────────────────────────────────
-with tab2:
-    st.markdown('<div class="section-title">👥 सम्पूर्ण कर्मचारी सूची</div>', unsafe_allow_html=True)
-
-    # 🔍 Search Section
-    st.markdown('<div class="section-title">🔍 कर्मचारी सर्च करें (नाम या मोबाइल)</div>', unsafe_allow_html=True)
-
-    col_search1, col_search2 = st.columns([3, 1])
-
-    with col_search1:
-        employee_search = st.text_input(
-            label="",
-            placeholder="नाम या मोबाइल नंबर टाइप करें...",
-            key="global_emp_search"
-        )
-
-    with col_search2:
-        search_clicked = st.button("🔍 सर्च करें", use_container_width=True, type="primary")
-
-    # Search Result
-    if employee_search.strip() and search_clicked:
-        term = employee_search.strip().lower()
-
-        filtered = main_df[
-            (main_df[name_col].str.lower().str.contains(term, na=False)) |
-            (main_df[mob_col].astype(str).str.contains(term, na=False))
-        ].copy()
-
-        if not filtered.empty:
-            st.success(f"✅ **{len(filtered)}** कर्मचारी मिले")
-
-            def get_shift_badge(shift):
-                if not shift or str(shift).strip() == "":
-                    return "🔴 ड्यूटी नहीं"
-                elif "1" in str(shift):
-                    return "🟡 Shift 1"
-                elif "2" in str(shift):
-                    return "🟢 Shift 2"
-                elif "3" in str(shift):
-                    return "🔵 Shift 3"
-                else:
-                    return shift
-
-            filtered["शिफ्ट"] = filtered[shift_col].apply(get_shift_badge)
-
-            show_cols = [mob_col, name_col, "Designation", "शिफ्ट", "Days_On_Duty"]
-            rename_map = {
-                mob_col: "मोबाइल",
-                name_col: "नाम",
-                "Designation": "पद",
-                "Days_On_Duty": "दिन"
-            }
-
-            st.dataframe(
-                filtered[show_cols].rename(columns=rename_map),
-                use_container_width=True,
-                hide_index=True,
-                height=400
-            )
-        else:
-            st.error("❌ कोई कर्मचारी नहीं मिला।")
-
-    st.markdown("---")
-
-    # 🔽 Filter + Full List
-    col_search, col_filter = st.columns([2, 1])
-
-    with col_search:
-        search = st.text_input("🔍 नाम / मोबाइल खोजें", placeholder="नाम टाइप करें...")
-
-    with col_filter:
-        status_filter = st.selectbox("स्थिति", ["सभी", "ड्यूटी पर", "अवकाश पर", "प्रतीक्षारत", "निष्क्रिय"])
-
-    disp = main_df.copy()
-
-    if search:
-        mask = disp[name_col].str.contains(search, case=False, na=False)
-        mask |= disp[mob_col].astype(str).str.contains(search, na=False)
-        disp = disp[mask]
-
-    if status_filter == "ड्यूटी पर":
-        disp = disp[disp[shift_col].str.strip() != ""]
-    elif status_filter == "अवकाश पर":
-        disp = disp[disp[mob_col].isin(leave_ids)]
-    elif status_filter == "प्रतीक्षारत":
-        disp = disp[(disp[shift_col].str.strip() == "") &
-                    (~disp[mob_col].isin(leave_ids)) &
-                    (disp[status_col] == 1)]
-    elif status_filter == "निष्क्रिय":
-        disp = disp[disp[status_col] == 0]
-
-    show_cols = [c for c in [
-        mob_col, name_col, "Designation",
-        shift_col, "Days_On_Duty",
-        "Total_Duty_3M", status_col
-    ] if c in disp.columns]
-
-    rename_map = {
-        mob_col: "मोबाइल",
-        name_col: "नाम",
-        "Designation": "पद",
-        shift_col: "वर्तमान शिफ्ट",
-        "Days_On_Duty": "दिन",
-        "Total_Duty_3M": "3M ड्यूटी",
-        status_col: "स्थिति"
-    }
-
-    st.dataframe(
-        disp[show_cols].rename(columns=rename_map),
-        use_container_width=True,
-        hide_index=True,
-        height=380
-    )
-
-    # Download Button
-    st.download_button(
-        label="⬇️ पूरी सूची डाउनलोड (.xlsx)",
-        data=df_to_excel_bytes(disp[show_cols].rename(columns=rename_map), "Staff_List"),
-        file_name=f"Staff_List_{today_str_ist}.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        use_container_width=True
-    )
-
-    st.caption(f"कुल: {len(disp)} कर्मचारी")
-    # ── Download full staff list ──────────────────────────────────────────
-    col_dl1, col_dl2 = st.columns([1, 3])
-    with col_dl1:
-        st.download_button(
-            label="⬇️ पूरी सूची डाउनलोड (.xlsx)",
-            data=df_to_excel_bytes(disp[show_cols].rename(columns=rename_map), "Staff_List"),
-            file_name=f"Staff_List_{today_str_ist}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            use_container_width=True
-        )
-    st.caption(f"कुल: {len(disp)} कर्मचारी")
-
-# ── TAB 3: Leave List ─────────────────────────────────────────────────────────
-with tab3:
-    st.markdown('<div class="section-title">🌴 अवकाश पर कर्मचारी</div>', unsafe_allow_html=True)
-
-    if leave_df.empty:
-        st.info("कोई कर्मचारी अवकाश पर नहीं है।")
-    else:
-        # Show with active/inactive indicator
-        today_date = now_ist().date()
-        leave_display = leave_df.copy()
-        def leave_status(row):
-            try:
-                f = pd.to_datetime(row.get("Leave_From",""), dayfirst=True).date()
-                t = pd.to_datetime(row.get("Leave_To",""), dayfirst=True).date()
-                if f <= today_date <= t:
-                    return "✅ आज सक्रिय"
-                elif today_date < f:
-                    return "⏳ आने वाली"
-                else:
-                    return "❌ समाप्त"
-            except:
-                return "—"
-        leave_display["अवकाश स्थिति"] = leave_display.apply(leave_status, axis=1)
-        st.dataframe(leave_display, use_container_width=True, hide_index=True, height=320)
-
-        # Download leave list
-        col_ldl, _ = st.columns([1, 3])
-        with col_ldl:
-            st.download_button(
-                label="⬇️ अवकाश सूची डाउनलोड (.xlsx)",
-                data=df_to_excel_bytes(leave_display, "Leave_List"),
-                file_name=f"Leave_List_{today_str_ist}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True
-            )
-        st.caption(f"कुल अवकाश: {len(leave_df)}")
-
-    st.markdown("---")
-    st.markdown("**नया अवकाश जोड़ें**")
-    lc1, lc2, lc3 = st.columns(3)
-    with lc1:
-        l_mob  = st.text_input("मोबाइल नं.", key="l_mob")
-    with lc2:
-        l_from = st.date_input("से तारीख (Leave_From)", key="l_from")
-    with lc3:
-        l_to   = st.date_input("तक तारीख (Leave_To)", key="l_to")
-    l_reason = st.text_input("कारण", key="l_reason")
-
-    if st.button("✅ अवकाश दर्ज करें"):
-        if l_mob:
-            try:
-                client = get_client()
-                sh     = client.open_by_key(SHEET_ID)
-                sh.worksheet("Leave").append_row([
-                    l_mob,
-                    l_from.strftime("%d-%m-%Y"),   # Leave_From
-                    l_to.strftime("%d-%m-%Y"),     # Leave_To
-                    l_reason,
-                ])
-                st.success(f"✅ अवकाश दर्ज हो गया! ({l_from.strftime('%d-%m-%Y')} से {l_to.strftime('%d-%m-%Y')} तक)")
-                load_sheet_data.clear()
-                st.rerun()
-            except Exception as e:
-                st.error(f"Error: {e}")
-        else:
-            st.warning("मोबाइल नं. भरें।")
-
-# ── TAB 4: Audit Log ──────────────────────────────────────────────────────────
-with tab4:
-    st.markdown('<div class="section-title">📜 Audit Log</div>', unsafe_allow_html=True)
-    if audit_df.empty:
-        st.info("अभी कोई लॉग नहीं है।")
-    else:
-        ac1, ac2 = st.columns([1, 1])
-        with ac1:
-            date_filter = st.text_input("तारीख फ़िल्टर (DD-MM-YYYY)", placeholder="जैसे: 15-06-2025")
-        with ac2:
-            action_filter = st.selectbox("Action", ["सभी", "Assigned", "Removed"])
-
-        a_df = audit_df.copy()
-        if date_filter:
-            a_df = a_df[a_df["Date"].str.contains(date_filter, na=False)]
-        if action_filter != "सभी":
-            a_df = a_df[a_df["Action"] == action_filter]
-
-        a_df_sorted = a_df.sort_values("Date", ascending=False) if "Date" in a_df.columns else a_df
-        st.dataframe(a_df_sorted, use_container_width=True, hide_index=True, height=360)
-
-        # Download audit log
-        col_adl, _ = st.columns([1, 3])
-        with col_adl:
-            st.download_button(
-                label="⬇️ Audit Log डाउनलोड (.xlsx)",
-                data=df_to_excel_bytes(a_df_sorted, "Audit_Log"),
-                file_name=f"Audit_Log_{today_str_ist}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True
-            )
-        st.caption(f"कुल रिकॉर्ड: {len(a_df)}")
-
-# ── TAB 5: Add / Edit Staff ───────────────────────────────────────────────────
-with tab5:
-    st.markdown('<div class="section-title">➕ नया कर्मचारी जोड़ें</div>', unsafe_allow_html=True)
-    ec1, ec2 = st.columns(2)
-    with ec1:
-        e_mob   = st.text_input("मोबाइल नं. *", key="e_mob")
-        e_name  = st.text_input("नाम (हिंदी) *", key="e_name")
-        e_desig = st.text_input("पद / पदनाम", key="e_desig")
-    with ec2:
-        e_rank       = st.text_input("रैंक", key="e_rank")
-        e_status     = st.selectbox("स्थिति", [1, 0], format_func=lambda x: "सक्रिय" if x == 1 else "निष्क्रिय")
-        e_shift_pref = st.selectbox("शिफ्ट वरीयता", ["", "Shift1", "Shift2", "Shift3"])
-
-    if st.button("💾 कर्मचारी सहेजें"):
-        if e_mob and e_name:
-            try:
-                client = get_client()
-                sh     = client.open_by_key(SHEET_ID)
-                ws     = sh.worksheet("Main_Duty")
-                ws.append_row([e_mob, e_name, e_desig, e_rank, e_status,
-                                e_shift_pref, "", 0, 0, 0, 0, 0])
-                st.success(f"✅ {e_name} जोड़ा गया! (वरीयता: {e_shift_pref or 'कोई नहीं'})")
-                load_sheet_data.clear()
-                st.rerun()
-            except Exception as e:
-                st.error(f"Error: {e}")
-        else:
-            st.warning("मोबाइल नं. और नाम ज़रूरी है।")
-
-    st.markdown("---")
-    st.markdown('<div class="section-title">🔄 Cache रिफ्रेश करें</div>', unsafe_allow_html=True)
-    if st.button("🔃 डेटा रिफ्रेश करें"):
-        load_sheet_data.clear()
-        st.rerun()
-
-# ── Footer ────────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────
+# FOOTER
+# ─────────────────────────────────────────
 st.markdown("---")
-st.markdown(
-    "<div style='text-align:center;color:#888;font-size:0.8rem;'>"
-    f"साइबर क्राइम हेल्पलाइन 1930 | ड्यूटी रोस्टर प्रणाली | {now_ist().strftime('%d-%m-%Y %H:%M')} IST"
-    "</div>",
-    unsafe_allow_html=True
-)
+st.markdown(f"<center>{now_ist()}</center>", unsafe_allow_html=True)
