@@ -1186,6 +1186,119 @@ with tab5:
         load_sheet_data.clear()
         st.rerun()
 
+# ── Mobile Search Section ─────────────────────────────────────────────────────
+st.markdown("---")
+st.markdown('<div class="section-title">🔍 मोबाइल नंबर से कर्मचारी खोजें</div>', unsafe_allow_html=True)
+
+search_col1, search_col2 = st.columns([2, 1])
+with search_col1:
+    search_mobile = st.text_input(
+        "📱 मोबाइल नंबर दर्ज करें",
+        placeholder="जैसे: 9876543210",
+        key="mob_search_input",
+        max_chars=10
+    )
+with search_col2:
+    search_btn = st.button("🔍 खोजें", use_container_width=True, key="mob_search_btn")
+
+if search_btn or search_mobile:
+    if search_mobile.strip():
+        result = main_df[main_df[mob_col].str.strip() == search_mobile.strip()]
+
+        if result.empty:
+            st.warning(f"❌ मोबाइल नं. **{search_mobile}** से कोई कर्मचारी नहीं मिला।")
+        else:
+            row = result.iloc[0]
+            emp_name  = row.get("Employee_Name", "—")
+            emp_desig = row.get("Designation", "—")
+            emp_shift = row.get("Current_Shift", "")
+            emp_days  = row.get("Days_On_Duty", 0)
+            emp_total = row.get("Total_Duty_3M", 0)
+            emp_status = row.get("STATUS", 0)
+            emp_mobile = row.get(mob_col, "—")
+
+            # Leave check
+            is_on_leave = emp_mobile in leave_ids
+
+            # Duty status
+            if is_on_leave:
+                duty_status = "🌴 अवकाश पर"
+                status_color = "#f97316"
+                shift_display = "अवकाश"
+            elif str(emp_shift).strip():
+                duty_status = "🟢 ड्यूटी पर"
+                status_color = "#22c55e"
+                shift_display = emp_shift
+            elif emp_status == 0:
+                duty_status = "🔴 निष्क्रिय"
+                status_color = "#ef4444"
+                shift_display = "निष्क्रिय"
+            else:
+                duty_status = "⏳ प्रतीक्षारत"
+                status_color = "#a855f7"
+                shift_display = "अभी नहीं"
+
+            # Leave dates if on leave
+            leave_info = ""
+            if is_on_leave and not leave_df.empty:
+                lv = leave_df[leave_df.get("Mobile_No", pd.Series(dtype=str)).astype(str).str.strip() == emp_mobile]
+                if not lv.empty:
+                    lrow = lv.iloc[0]
+                    leave_info = f"{lrow.get('Leave_From','—')} से {lrow.get('Leave_To','—')} तक"
+
+            st.markdown(f"""
+            <div style="
+                background: rgba(255,255,255,0.04);
+                border: 1px solid rgba(255,255,255,0.10);
+                border-left: 4px solid {status_color};
+                border-radius: 16px;
+                padding: 24px 28px;
+                margin-top: 16px;
+            ">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                    <div>
+                        <div style="font-size:1.4rem; font-weight:700; color:#e8f0ff; margin-bottom:4px;">
+                            👤 {emp_name}
+                        </div>
+                        <div style="font-size:0.85rem; color:#7a92b8; margin-bottom:2px;">
+                            🏷️ पद: {emp_desig}
+                        </div>
+                        <div style="font-size:0.85rem; color:#7a92b8;">
+                            📱 मोबाइल: {emp_mobile}
+                        </div>
+                    </div>
+                    <div style="
+                        background: rgba(0,0,0,0.3);
+                        border-radius: 12px;
+                        padding: 12px 20px;
+                        text-align:center;
+                        border: 1px solid {status_color}44;
+                    ">
+                        <div style="font-size:1.1rem; font-weight:700; color:{status_color};">
+                            {duty_status}
+                        </div>
+                        <div style="font-size:1.3rem; font-weight:700; color:#e8f0ff; margin-top:4px;">
+                            {shift_display}
+                        </div>
+                    </div>
+                </div>
+                <hr style="border-color:rgba(255,255,255,0.08); margin: 16px 0;">
+                <div style="display:flex; gap:32px; flex-wrap:wrap;">
+                    <div style="text-align:center;">
+                        <div style="font-size:1.6rem; font-weight:700; color:#60a5fa;">{int(emp_days)}</div>
+                        <div style="font-size:0.72rem; color:#7a92b8; letter-spacing:0.5px;">वर्तमान ड्यूटी (दिन)</div>
+                    </div>
+                    <div style="text-align:center;">
+                        <div style="font-size:1.6rem; font-weight:700; color:#c084fc;">{int(emp_total)}</div>
+                        <div style="font-size:0.72rem; color:#7a92b8; letter-spacing:0.5px;">कुल ड्यूटी (3 माह)</div>
+                    </div>
+                    {f'<div style="text-align:center;"><div style="font-size:0.95rem; font-weight:600; color:#f97316;">📅 {leave_info}</div><div style="font-size:0.72rem; color:#7a92b8;">अवकाश अवधि</div></div>' if leave_info else ''}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+    else:
+        st.info("ℹ️ खोजने के लिए मोबाइल नंबर दर्ज करें।")
+
 # ── Footer ────────────────────────────────────────────────────────────────────
 st.markdown(f"""
 <div class="footer">
