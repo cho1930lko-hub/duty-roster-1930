@@ -2,10 +2,16 @@ import streamlit as st
 import pandas as pd
 import gspread
 from google.oauth2.service_account import Credentials
-from datetime import datetime, date
+from datetime import datetime, timezone, timedelta
 import json
 import io
-from zoneinfo import ZoneInfo
+
+# ── IST timezone using stdlib only (no pytz) ──────────────────────────────────
+IST = timezone(timedelta(hours=5, minutes=30))
+
+def now_ist():
+    return datetime.now(IST)
+
 # ✅ STEP 1: set_page_config SABSE PEHLE
 st.set_page_config(
     page_title="ड्यूटी रोस्टर | 1930",
@@ -13,12 +19,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed",
 )
-
-# ── India/Kolkata timezone (Lucknow local time) ───────────────────────────────
-IST = ZoneInfo("Asia/Kolkata")
-
-def now_ist():
-    return datetime.now(IST)
 
 # ✅ STEP 2: Password Protection
 def check_password():
@@ -51,52 +51,86 @@ SHEET_ID = "1nwW5UvaMhBdcCQxR6TbPlwydDULS9MWZIml-nryjqRs"
 # ── Custom CSS ────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700;900&family=Rajdhani:wght@600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700;900&family=Rajdhani:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+/* ══════════════════════════════════════════
+   ROOT VARIABLES & BASE RESET
+══════════════════════════════════════════ */
+:root {
+  --navy-deep:    #060d1f;
+  --navy-mid:     #0d1b3e;
+  --navy-light:   #1a2d5a;
+  --navy-glow:    #1e3a7a;
+  --accent-blue:  #2E75B6;
+  --accent-cyan:  #00d4ff;
+  --accent-gold:  #ffd700;
+  --accent-green: #22c55e;
+  --accent-red:   #ef4444;
+  --accent-orange:#f97316;
+  --accent-purple:#a855f7;
+  --glass-bg:     rgba(255,255,255,0.04);
+  --glass-border: rgba(255,255,255,0.10);
+  --text-primary: #e8f0ff;
+  --text-muted:   #7a92b8;
+  --shadow-glow:  0 0 40px rgba(46,117,182,0.25);
+}
 
 html, body, [class*="css"] {
     font-family: 'Noto Sans Devanagari', sans-serif;
+    background: var(--navy-deep) !important;
+    color: var(--text-primary) !important;
 }
 
-/* ── MAGIC LIGHT HEADER ── */
+/* Dark background for entire app */
+.stApp {
+    background: linear-gradient(135deg, #060d1f 0%, #0a1628 40%, #060d1f 100%) !important;
+    min-height: 100vh;
+}
+
+/* Main content area */
+.main .block-container {
+    padding: 1.5rem 2rem 3rem 2rem !important;
+    max-width: 1400px !important;
+}
+
+/* ══════════════════════════════════════════
+   MAGIC LIGHT HEADER — ENHANCED
+══════════════════════════════════════════ */
 .magic-header-wrap {
     position: relative;
-    margin-bottom: 28px;
-    padding: 4px;
-    border-radius: 18px;
-    background: linear-gradient(135deg, #0a0a1a, #0d1b3e, #0a0a1a);
-    overflow: hidden;
+    margin-bottom: 32px;
+    border-radius: 20px;
+    padding: 3px;
+    overflow: visible;
 }
 
-/* Rotating conic gradient border — magic light effect */
 .magic-header-wrap::before {
     content: '';
     position: absolute;
-    inset: -3px;
-    border-radius: 20px;
+    inset: -2px;
+    border-radius: 22px;
     background: conic-gradient(
-        from 0deg,
-        #ff0080, #ff4d00, #ffcc00, #00ff88,
+        from var(--angle, 0deg),
+        #ff0080, #ff6b00, #ffd700, #00ff88,
         #00cfff, #7f5fff, #ff0080
     );
-    animation: spin-border 4s linear infinite;
+    animation: spin-border 5s linear infinite;
     z-index: 0;
-    filter: blur(2px);
 }
 
-/* Pulsing glow behind the box */
 .magic-header-wrap::after {
     content: '';
     position: absolute;
-    inset: -12px;
-    border-radius: 28px;
+    inset: -20px;
+    border-radius: 32px;
     background: conic-gradient(
         from 0deg,
-        #ff008080, #00cfff80, #7f5fff80, #ff008080
+        #ff008055, #00cfff55, #7f5fff55, #ff008055
     );
-    animation: spin-border 4s linear infinite;
-    filter: blur(18px);
+    animation: spin-border 5s linear infinite;
+    filter: blur(24px);
     z-index: -1;
-    opacity: 0.6;
+    opacity: 0.7;
 }
 
 @keyframes spin-border {
@@ -107,165 +141,505 @@ html, body, [class*="css"] {
 .magic-header-inner {
     position: relative;
     z-index: 1;
-    background: linear-gradient(135deg, #0d1b3e 0%, #1a2d5a 50%, #0d1b3e 100%);
-    border-radius: 14px;
-    padding: 22px 28px;
+    background: linear-gradient(135deg,
+        #0d1b3e 0%, #132448 30%, #1a2d5a 60%, #0d1b3e 100%);
+    border-radius: 18px;
+    padding: 28px 36px 24px;
     text-align: center;
+    overflow: hidden;
 }
 
-/* Shimmer overlay on header text */
+/* Noise texture overlay */
+.magic-header-inner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    border-radius: 18px;
+    pointer-events: none;
+}
+
+/* Diagonal light sweep */
+.magic-header-inner::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        105deg,
+        transparent 40%,
+        rgba(255,255,255,0.04) 50%,
+        transparent 60%
+    );
+    animation: sweep 6s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes sweep {
+    0%   { transform: translateX(-100%) }
+    50%, 100% { transform: translateX(100%) }
+}
+
 .magic-header-inner h1 {
     font-family: 'Rajdhani', 'Noto Sans Devanagari', sans-serif;
-    font-size: 2rem;
+    font-size: 2.2rem;
     font-weight: 700;
-    margin: 0;
+    margin: 0 0 8px 0;
     background: linear-gradient(90deg,
-        #ffffff 0%, #a8d4ff 25%, #ffffff 50%, #ffd700 75%, #ffffff 100%);
-    background-size: 200% auto;
+        #fff 0%, #a8d4ff 20%, #ffd700 40%,
+        #ffffff 60%, #a8d4ff 80%, #ffd700 100%);
+    background-size: 300% auto;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    animation: shimmer-text 3s linear infinite;
-    letter-spacing: 1px;
+    animation: shimmer-text 4s linear infinite;
+    letter-spacing: 1.5px;
+    position: relative; z-index: 1;
 }
 
 @keyframes shimmer-text {
-    0%   { background-position: 200% center; }
-    100% { background-position: -200% center; }
+    0%   { background-position: 300% center; }
+    100% { background-position: -300% center; }
 }
 
 .magic-header-inner .subtitle {
-    font-size: 0.95rem;
-    margin: 6px 0 0 0;
-    color: #88aadd;
-    letter-spacing: 2px;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    letter-spacing: 3px;
     text-transform: uppercase;
     font-weight: 600;
+    position: relative; z-index: 1;
 }
 
-/* Floating particles inside header */
+.header-badge {
+    display: inline-block;
+    background: rgba(0,212,255,0.12);
+    border: 1px solid rgba(0,212,255,0.3);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 0.72rem;
+    color: #00d4ff;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 10px;
+    position: relative; z-index: 1;
+}
+
+/* Floating particles */
 .particle {
     position: absolute;
     border-radius: 50%;
-    animation: float-up 3s ease-in infinite;
+    animation: float-up 4s ease-in infinite;
     opacity: 0;
+    z-index: 2;
 }
-.p1 { width:6px; height:6px; background:#00cfff; left:10%; animation-delay:0s; }
-.p2 { width:4px; height:4px; background:#ff0080; left:25%; animation-delay:0.8s; }
-.p3 { width:5px; height:5px; background:#ffd700; left:50%; animation-delay:1.5s; }
-.p4 { width:3px; height:3px; background:#00ff88; left:75%; animation-delay:0.4s; }
-.p5 { width:6px; height:6px; background:#7f5fff; left:90%; animation-delay:1.2s; }
+.p1 { width:5px; height:5px; background:#00cfff; left:8%;  animation-delay:0s; }
+.p2 { width:3px; height:3px; background:#ff0080; left:22%; animation-delay:1s; }
+.p3 { width:6px; height:6px; background:#ffd700; left:48%; animation-delay:2s; }
+.p4 { width:4px; height:4px; background:#00ff88; left:72%; animation-delay:0.5s; }
+.p5 { width:5px; height:5px; background:#7f5fff; left:90%; animation-delay:1.5s; }
+.p6 { width:3px; height:3px; background:#ff6b00; left:35%; animation-delay:2.5s; }
 
 @keyframes float-up {
-    0%   { opacity:0; transform: translateY(30px) scale(0); }
+    0%   { opacity:0; transform: translateY(40px) scale(0); }
     20%  { opacity:1; }
-    80%  { opacity:0.5; }
-    100% { opacity:0; transform: translateY(-20px) scale(1.5); }
+    80%  { opacity:0.6; }
+    100% { opacity:0; transform: translateY(-30px) scale(1.5); }
 }
 
-/* ── METRIC CARDS ── */
+/* ══════════════════════════════════════════
+   METRIC CARDS — DARK GLASSMORPHISM
+══════════════════════════════════════════ */
 .metric-card {
-    background: white;
-    border-radius: 12px;
-    padding: 16px 20px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.12);
-    border-left: 5px solid;
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 20px 16px;
     text-align: center;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    cursor: default;
 }
-.metric-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.18);
-}
-.metric-card .val  { font-size: 2.4rem; font-weight: 800; line-height: 1.1; }
-.metric-card .lbl  { font-size: 0.82rem; color: #666; margin-top: 4px; font-weight: 600; }
-.card-blue   { border-color: #2E75B6; color: #2E75B6; }
-.card-green  { border-color: #70AD47; color: #70AD47; }
-.card-orange { border-color: #FFC000; color: #FFC000; }
-.card-red    { border-color: #FF0000; color: #FF0000; }
-.card-purple { border-color: #7030A0; color: #7030A0; }
 
-/* ── SHIFT BADGE ── */
-.shift-badge {
-    display:inline-block; padding:3px 12px; border-radius:14px;
-    font-size:0.8rem; font-weight:700; color:white;
+.metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+}
+
+.metric-card:hover {
+    transform: translateY(-5px);
+}
+
+.metric-card .val {
+    font-family: 'Rajdhani', monospace;
+    font-size: 3rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 6px;
+}
+
+.metric-card .lbl {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-weight: 600;
     letter-spacing: 0.5px;
 }
-.s1 { background: linear-gradient(135deg, #FFC000, #FF8C00); color:#000; }
-.s2 { background: linear-gradient(135deg, #70AD47, #3d8b20); }
-.s3 { background: linear-gradient(135deg, #2E75B6, #1a4d8a); }
-.leave-badge { background: linear-gradient(135deg, #FF4444, #cc0000); }
 
-/* ── SECTION TITLE ── */
-.section-title {
-    font-size:1.1rem; font-weight:700; color:#1F3864;
-    border-bottom:3px solid #2E75B6; padding-bottom:6px;
-    margin:20px 0 12px 0;
+.metric-card .icon {
+    font-size: 1.4rem;
+    margin-bottom: 8px;
+    display: block;
 }
 
-/* ── RUN BUTTON ── */
-.run-btn button {
-    background: linear-gradient(135deg,#1F3864,#2E75B6) !important;
-    color: white !important; font-weight:700 !important;
-    font-size:1rem !important; border-radius:8px !important;
-    padding: 10px 24px !important; width:100%;
+/* Card colour variants */
+.card-blue   { box-shadow: 0 4px 30px rgba(46,117,182,0.2);   border-color: rgba(46,117,182,0.35); }
+.card-blue   .val { color: #60a5fa; }
+.card-blue::before { background: linear-gradient(90deg, #2E75B6, #60a5fa); }
+
+.card-green  { box-shadow: 0 4px 30px rgba(34,197,94,0.2);    border-color: rgba(34,197,94,0.35); }
+.card-green  .val { color: #4ade80; }
+.card-green::before { background: linear-gradient(90deg, #16a34a, #4ade80); }
+
+.card-orange { box-shadow: 0 4px 30px rgba(249,115,22,0.2);   border-color: rgba(249,115,22,0.35); }
+.card-orange .val { color: #fb923c; }
+.card-orange::before { background: linear-gradient(90deg, #ea580c, #fb923c); }
+
+.card-purple { box-shadow: 0 4px 30px rgba(168,85,247,0.2);   border-color: rgba(168,85,247,0.35); }
+.card-purple .val { color: #c084fc; }
+.card-purple::before { background: linear-gradient(90deg, #9333ea, #c084fc); }
+
+.card-red    { box-shadow: 0 4px 30px rgba(239,68,68,0.2);    border-color: rgba(239,68,68,0.35); }
+.card-red    .val { color: #f87171; }
+.card-red::before { background: linear-gradient(90deg, #dc2626, #f87171); }
+
+/* ══════════════════════════════════════════
+   SHIFT BADGES
+══════════════════════════════════════════ */
+.shift-badge {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    border: 1px solid transparent;
+}
+.s1 {
+    background: rgba(255,192,0,0.15);
+    color: #ffd700;
+    border-color: rgba(255,192,0,0.4);
+}
+.s2 {
+    background: rgba(34,197,94,0.15);
+    color: #4ade80;
+    border-color: rgba(34,197,94,0.4);
+}
+.s3 {
+    background: rgba(96,165,250,0.15);
+    color: #60a5fa;
+    border-color: rgba(96,165,250,0.4);
+}
+.leave-badge {
+    background: rgba(239,68,68,0.15);
+    color: #f87171;
+    border-color: rgba(239,68,68,0.4);
+}
+
+/* ══════════════════════════════════════════
+   SECTION TITLE
+══════════════════════════════════════════ */
+.section-title {
+    font-family: 'Rajdhani', 'Noto Sans Devanagari', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: 1px;
+    padding: 10px 16px;
+    margin: 24px 0 14px 0;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-left: 4px solid var(--accent-blue);
+    border-radius: 0 10px 10px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ══════════════════════════════════════════
+   SHIFT CARD (Tab 1)
+══════════════════════════════════════════ */
+.shift-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 18px 16px 12px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s ease;
+    margin-bottom: 12px;
+}
+.shift-card:hover { transform: translateY(-3px); }
+.shift-card .count {
+    font-family: 'Rajdhani', monospace;
+    font-size: 2.8rem;
+    font-weight: 700;
+    line-height: 1;
+}
+.shift-card .unit {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+/* Gradient top strip */
+.sc-s1 { border-top: 3px solid #ffd700; box-shadow: 0 4px 20px rgba(255,215,0,0.12); }
+.sc-s1 .count { color: #ffd700; }
+.sc-s2 { border-top: 3px solid #4ade80; box-shadow: 0 4px 20px rgba(74,222,128,0.12); }
+.sc-s2 .count { color: #4ade80; }
+.sc-s3 { border-top: 3px solid #60a5fa; box-shadow: 0 4px 20px rgba(96,165,250,0.12); }
+.sc-s3 .count { color: #60a5fa; }
+
+/* ══════════════════════════════════════════
+   STREAMLIT COMPONENT OVERRIDES (dark theme)
+══════════════════════════════════════════ */
+
+/* Tabs */
+.stTabs [data-baseweb="tab-list"] {
+    background: var(--glass-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 12px !important;
+    padding: 4px !important;
+    gap: 4px !important;
+}
+.stTabs [data-baseweb="tab"] {
+    background: transparent !important;
+    border-radius: 8px !important;
+    color: var(--text-muted) !important;
+    font-weight: 600 !important;
+    font-size: 0.82rem !important;
+    padding: 8px 16px !important;
+    transition: all 0.2s ease !important;
+    border: none !important;
+}
+.stTabs [aria-selected="true"] {
+    background: linear-gradient(135deg, var(--navy-glow), var(--accent-blue)) !important;
+    color: white !important;
+}
+
+/* Dataframe */
+[data-testid="stDataFrame"] {
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+}
+
+/* Text inputs */
+.stTextInput > div > div > input {
+    background: var(--glass-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 8px !important;
+    color: var(--text-primary) !important;
+    transition: border-color 0.2s ease !important;
+}
+.stTextInput > div > div > input:focus {
+    border-color: var(--accent-blue) !important;
+    box-shadow: 0 0 0 2px rgba(46,117,182,0.25) !important;
+}
+
+/* Selectbox */
+.stSelectbox > div > div {
+    background: var(--glass-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 8px !important;
+    color: var(--text-primary) !important;
+}
+
+/* Buttons */
+.stButton > button {
+    background: linear-gradient(135deg, var(--navy-mid), var(--accent-blue)) !important;
+    color: white !important;
+    font-weight: 700 !important;
+    font-size: 0.9rem !important;
+    border-radius: 10px !important;
+    border: 1px solid rgba(46,117,182,0.5) !important;
+    padding: 10px 22px !important;
+    transition: all 0.25s ease !important;
+    letter-spacing: 0.3px !important;
+}
+.stButton > button:hover {
+    background: linear-gradient(135deg, var(--accent-blue), #1a4d8a) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(46,117,182,0.4) !important;
+}
+
+/* Download buttons */
+.stDownloadButton > button {
+    background: linear-gradient(135deg, #16a34a, #15803d) !important;
+    color: white !important;
+    font-weight: 700 !important;
+    font-size: 0.82rem !important;
+    border-radius: 8px !important;
+    border: 1px solid rgba(34,197,94,0.4) !important;
     transition: all 0.2s ease !important;
 }
-.run-btn button:hover {
-    background: linear-gradient(135deg,#2E75B6,#1F3864) !important;
-    transform: translateY(-1px) !important;
+.stDownloadButton > button:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 18px rgba(22,163,74,0.4) !important;
 }
 
-/* ── DOWNLOAD BUTTON ── */
-.download-btn {
-    display: inline-block;
-    background: linear-gradient(135deg, #16a34a, #15803d);
-    color: white !important;
-    font-weight: 700;
-    font-size: 0.85rem;
-    border-radius: 8px;
-    padding: 8px 18px;
-    text-decoration: none;
-    border: none;
-    cursor: pointer;
-    box-shadow: 0 3px 10px rgba(22,163,74,0.3);
-    transition: all 0.2s ease;
-    margin: 4px;
+/* Info/Success/Warning/Error boxes */
+.stAlert {
+    border-radius: 10px !important;
+    border-left: 4px solid !important;
 }
-.download-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(22,163,74,0.4);
+[data-testid="stInfoMessage"] {
+    background: rgba(46,117,182,0.1) !important;
+    border-color: var(--accent-blue) !important;
+}
+[data-testid="stSuccessMessage"] {
+    background: rgba(34,197,94,0.1) !important;
+    border-color: var(--accent-green) !important;
+}
+[data-testid="stWarningMessage"] {
+    background: rgba(249,115,22,0.1) !important;
+    border-color: var(--accent-orange) !important;
 }
 
-/* ── SIDEBAR CLOCK ── */
+/* Date input */
+.stDateInput > div > div > input {
+    background: var(--glass-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 8px !important;
+    color: var(--text-primary) !important;
+}
+
+/* Spinner */
+.stSpinner > div {
+    border-top-color: var(--accent-cyan) !important;
+}
+
+/* Horizontal rule */
+hr {
+    border-color: var(--glass-border) !important;
+    margin: 20px 0 !important;
+}
+
+/* Caption text */
+.stCaption {
+    color: var(--text-muted) !important;
+    font-size: 0.78rem !important;
+}
+
+/* ══════════════════════════════════════════
+   SIDEBAR — DARK GLASS
+══════════════════════════════════════════ */
+[data-testid="stSidebar"] {
+    background: linear-gradient(160deg, #0a1220, #0d1b3e) !important;
+    border-right: 1px solid var(--glass-border) !important;
+}
+[data-testid="stSidebar"] * {
+    color: var(--text-primary) !important;
+}
+
+/* ── Clock Box ── */
 .clock-box {
-    background: linear-gradient(135deg, #0d1b3e, #1a2d5a);
-    border-radius: 12px;
-    padding: 14px 16px;
+    background: linear-gradient(135deg, var(--navy-deep), var(--navy-mid));
+    border-radius: 14px;
+    padding: 18px 16px;
     text-align: center;
-    border: 1px solid #2E75B6;
-    box-shadow: 0 0 20px rgba(46,117,182,0.3);
+    border: 1px solid rgba(0,212,255,0.2);
+    box-shadow: 0 0 30px rgba(0,212,255,0.12), inset 0 1px 0 rgba(255,255,255,0.05);
     margin-top: 8px;
+    position: relative;
+    overflow: hidden;
+}
+.clock-box::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(circle at center, rgba(0,212,255,0.04) 0%, transparent 60%);
+    pointer-events: none;
+}
+.clock-label {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
 }
 .clock-date {
     font-size: 1rem;
     font-weight: 700;
-    color: #ffd700;
-    margin-bottom: 4px;
+    color: var(--accent-gold);
+    margin-bottom: 6px;
+    font-family: 'Noto Sans Devanagari', sans-serif;
 }
 .clock-time {
-    font-size: 1.6rem;
-    font-weight: 900;
-    color: #00cfff;
-    font-family: 'Rajdhani', monospace;
-    letter-spacing: 2px;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent-cyan);
+    font-family: 'Space Mono', 'Rajdhani', monospace;
+    letter-spacing: 3px;
+    text-shadow: 0 0 20px rgba(0,212,255,0.5);
 }
-.clock-label {
-    font-size: 0.7rem;
-    color: #88aadd;
-    margin-top: 2px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
+.clock-city {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+    letter-spacing: 1.5px;
+}
+
+/* ══════════════════════════════════════════
+   FOOTER
+══════════════════════════════════════════ */
+.footer {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    padding: 16px;
+    border-top: 1px solid var(--glass-border);
+    margin-top: 32px;
+    letter-spacing: 0.5px;
+}
+
+/* ══════════════════════════════════════════
+   SCROLLBAR (webkit)
+══════════════════════════════════════════ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--navy-deep); }
+::-webkit-scrollbar-thumb {
+    background: var(--navy-glow);
+    border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--accent-blue); }
+
+/* ══════════════════════════════════════════
+   PULSE ANIMATION for live dot
+══════════════════════════════════════════ */
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.4; transform: scale(1.5); }
+}
+.live-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    background: #22c55e;
+    border-radius: 50%;
+    animation: pulse-dot 1.5s ease-in-out infinite;
+    box-shadow: 0 0 6px #22c55e;
+    margin-right: 6px;
+    vertical-align: middle;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -301,11 +675,6 @@ def load_sheet_data(sheet_id):
 
 # ── Helper: Active leaves today (date-aware) ──────────────────────────────────
 def get_active_leave_ids(leave_df):
-    """
-    Return list of Mobile_No whose leave covers today (IST).
-    Checks: Leave_From <= today <= Leave_To
-    Falls back to simple Mobile_No match if dates missing/invalid.
-    """
     today = now_ist().date()
     if leave_df.empty or "Mobile_No" not in leave_df.columns:
         return []
@@ -321,7 +690,6 @@ def get_active_leave_ids(leave_df):
             if from_date <= today <= to_date:
                 active.append(mob)
         except:
-            # If dates missing/invalid → include unconditionally (safe fallback)
             active.append(mob)
     return active
 
@@ -350,7 +718,6 @@ def run_assignment(sheet_id):
     if last_run == today_str:
         return False, f"🛑 आज ({today_str}) ड्यूटी पहले ही लग चुकी है।"
 
-    # Load data
     df = pd.DataFrame(main_ws.get_all_records())
     mob_col        = "Mobile_No"
     name_col       = "Employee_Name"
@@ -370,7 +737,6 @@ def run_assignment(sheet_id):
         if c in df.columns:
             df[c] = pd.to_numeric(df[c], errors="coerce").fillna(0).astype(int)
 
-    # Config rules
     shift_rules = {}
     for row in config_ws.get_all_values()[1:]:
         if row[0]:
@@ -379,13 +745,11 @@ def run_assignment(sheet_id):
             except:
                 continue
 
-    # ✅ Date-aware leave list
     leave_data = pd.DataFrame(leave_ws.get_all_records())
     leave_list = get_active_leave_ids(leave_data)
 
     logs = []
 
-    # Rotation / removal
     for mobile, row in df.iterrows():
         if not row[shift_col] or str(row[shift_col]).strip() == "":
             df.at[mobile, days_col] = 0
@@ -403,7 +767,6 @@ def run_assignment(sheet_id):
         except:
             df.at[mobile, days_col] = 0
 
-    # Assignment
     for s_name, rule in shift_rules.items():
         current_count = len(df[df[shift_col] == s_name])
         needed = rule["req"] - current_count
@@ -423,7 +786,6 @@ def run_assignment(sheet_id):
                     df.at[m, t_cnt] += 1
                 logs.append([today_str, now_time, m, df.at[m, name_col], "Assigned", s_name, "Success"])
 
-    # Export
     df_export  = df.reset_index()
     final_data = [df_export.columns.values.tolist()] + df_export.fillna("").values.tolist()
     main_ws.update(final_data)
@@ -452,34 +814,35 @@ st.markdown("""
     <div class="particle p3"></div>
     <div class="particle p4"></div>
     <div class="particle p5"></div>
+    <div class="particle p6"></div>
     <h1>🚨 साइबर क्राइम हेल्पलाइन 1930</h1>
     <div class="subtitle">✦ ड्यूटी रोस्टर प्रबंधन प्रणाली ✦</div>
+    <div class="header-badge"><span class="live-dot"></span>LIVE SYSTEM • ACTIVE</div>
   </div>
 </div>
 """, unsafe_allow_html=True)
 
-# ── Sidebar — IST time (Lucknow / India) ─────────────────────────────────────
+# ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("### ⚙️ सेटिंग्स")
     st.markdown("---")
 
     now = now_ist()
 
-    # Hindi month names
     hindi_months = {
         1:"जनवरी", 2:"फ़रवरी", 3:"मार्च", 4:"अप्रैल",
         5:"मई", 6:"जून", 7:"जुलाई", 8:"अगस्त",
         9:"सितम्बर", 10:"अक्टूबर", 11:"नवम्बर", 12:"दिसम्बर"
     }
     date_str = f"{now.day} {hindi_months[now.month]} {now.year}"
-    time_str = now.strftime("%I:%M %p")  # 12-hour format with AM/PM
+    time_str = now.strftime("%I:%M %p")
 
     st.markdown(f"""
     <div class="clock-box">
       <div class="clock-label">📍 भारतीय मानक समय (IST)</div>
       <div class="clock-date">📅 {date_str}</div>
-      <div class="clock-time">🕐 {time_str}</div>
-      <div class="clock-label">लखनऊ • प्रयागराज • भारत</div>
+      <div class="clock-time">{time_str}</div>
+      <div class="clock-city">लखनऊ • प्रयागराज • भारत</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -501,7 +864,7 @@ main_df[mob_col]    = main_df[mob_col].astype(str).str.strip()
 main_df[status_col] = pd.to_numeric(main_df[status_col], errors="coerce").fillna(0).astype(int)
 
 on_duty    = main_df[main_df[shift_col].str.strip() != ""]
-leave_ids  = get_active_leave_ids(leave_df)   # ✅ date-aware
+leave_ids  = get_active_leave_ids(leave_df)
 on_leave   = main_df[main_df[mob_col].isin(leave_ids)]
 inactive   = main_df[main_df[status_col] == 0]
 unassigned = main_df[(main_df[shift_col].str.strip() == "") &
@@ -509,19 +872,20 @@ unassigned = main_df[(main_df[shift_col].str.strip() == "") &
                      (main_df[status_col] == 1)]
 
 # ── Summary Cards ─────────────────────────────────────────────────────────────
-st.markdown('<div class="section-title">📊 सारांश</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-title">📊 सारांश डैशबोर्ड</div>', unsafe_allow_html=True)
 c1, c2, c3, c4, c5 = st.columns(5)
 cards = [
-    (c1, len(main_df),    "कुल कर्मचारी", "card-blue"),
-    (c2, len(on_duty),    "ड्यूटी पर",     "card-green"),
-    (c3, len(on_leave),   "अवकाश पर",      "card-orange"),
-    (c4, len(unassigned), "प्रतीक्षारत",    "card-purple"),
-    (c5, len(inactive),   "निष्क्रिय",      "card-red"),
+    (c1, "👥", len(main_df),    "कुल कर्मचारी", "card-blue"),
+    (c2, "🟢", len(on_duty),    "ड्यूटी पर",     "card-green"),
+    (c3, "🌴", len(on_leave),   "अवकाश पर",      "card-orange"),
+    (c4, "⏳", len(unassigned), "प्रतीक्षारत",    "card-purple"),
+    (c5, "🔴", len(inactive),   "निष्क्रिय",      "card-red"),
 ]
-for col, val, lbl, cls in cards:
+for col, icon, val, lbl, cls in cards:
     with col:
         st.markdown(f"""
         <div class="metric-card {cls}">
+          <span class="icon">{icon}</span>
           <div class="val">{val}</div>
           <div class="lbl">{lbl}</div>
         </div>""", unsafe_allow_html=True)
@@ -532,9 +896,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 st.markdown('<div class="section-title">⚡ ड्यूटी लगाएं</div>', unsafe_allow_html=True)
 col_btn, col_info = st.columns([1, 2])
 with col_btn:
-    st.markdown('<div class="run-btn">', unsafe_allow_html=True)
     run_clicked = st.button("🔄 आज की ड्यूटी लगाएं", use_container_width=True)
-    st.markdown('</div>', unsafe_allow_html=True)
 with col_info:
     today_str_ist = now_ist().strftime("%d-%m-%Y")
     try:
@@ -572,14 +934,12 @@ with tab1:
     if not shifts:
         st.info("अभी कोई ड्यूटी नहीं लगी है। ऊपर 'ड्यूटी लगाएं' बटन दबाएं।")
     else:
-        # ── Download all shifts combined ──────────────────────────────────
         st.markdown('<div class="section-title">📥 शिफ्ट रिपोर्ट डाउनलोड करें</div>', unsafe_allow_html=True)
 
         dl_cols = [c for c in [mob_col, name_col, "Designation", shift_col, "Days_On_Duty"] if c in main_df.columns]
 
         dcol1, dcol2, dcol3, dcol4 = st.columns(4)
 
-        # Shift 1
         with dcol1:
             s1_name = next((s for s in sorted(shifts) if "1" in s), None)
             if s1_name:
@@ -592,7 +952,6 @@ with tab1:
                     use_container_width=True
                 )
 
-        # Shift 2
         with dcol2:
             s2_name = next((s for s in sorted(shifts) if "2" in s), None)
             if s2_name:
@@ -605,7 +964,6 @@ with tab1:
                     use_container_width=True
                 )
 
-        # Shift 3
         with dcol3:
             s3_name = next((s for s in sorted(shifts) if "3" in s), None)
             if s3_name:
@@ -618,7 +976,6 @@ with tab1:
                     use_container_width=True
                 )
 
-        # All shifts combined
         with dcol4:
             all_duty_df = on_duty[dl_cols].copy()
             st.download_button(
@@ -631,24 +988,17 @@ with tab1:
 
         st.markdown("---")
 
-        # ── Shift display cards ───────────────────────────────────────────
-        shift_colors = {0: "s1", 1: "s2", 2: "s3"}
+        shift_colors = {0: ("s1", "sc-s1"), 1: ("s2", "sc-s2"), 2: ("s3", "sc-s3")}
         cols = st.columns(len(shifts))
         for idx, s in enumerate(sorted(shifts)):
-            s_df      = on_duty[on_duty[shift_col] == s]
-            badge_cls = shift_colors.get(idx % 3, "s1")
+            s_df = on_duty[on_duty[shift_col] == s]
+            badge_cls, card_cls = shift_colors.get(idx % 3, ("s1", "sc-s1"))
             with cols[idx]:
                 st.markdown(f"""
-                <div style="background:white;border-radius:12px;padding:14px;
-                     box-shadow:0 4px 15px rgba(0,0,0,0.1);min-height:200px;
-                     border-top: 4px solid #2E75B6;">
-                  <div style="text-align:center;margin-bottom:10px;">
-                    <span class="shift-badge {badge_cls}">{s}</span>
-                    <div style="font-size:1.8rem;font-weight:800;color:#1F3864;margin-top:6px;">
-                      {len(s_df)}
-                    </div>
-                    <div style="font-size:0.75rem;color:#888;font-weight:600;">कर्मचारी</div>
-                  </div>
+                <div class="shift-card {card_cls}">
+                  <span class="shift-badge {badge_cls}">{s}</span>
+                  <div class="count">{len(s_df)}</div>
+                  <div class="unit">कर्मचारी</div>
                 </div>""", unsafe_allow_html=True)
 
                 disp_cols  = [c for c in [name_col, "Designation", "Days_On_Duty"] if c in main_df.columns]
@@ -691,7 +1041,6 @@ with tab2:
     st.dataframe(disp[show_cols].rename(columns=rename_map),
                  use_container_width=True, hide_index=True, height=380)
 
-    # ── Download full staff list ──────────────────────────────────────────
     col_dl1, col_dl2 = st.columns([1, 3])
     with col_dl1:
         st.download_button(
@@ -710,9 +1059,9 @@ with tab3:
     if leave_df.empty:
         st.info("कोई कर्मचारी अवकाश पर नहीं है।")
     else:
-        # Show with active/inactive indicator
-        today_date = now_ist().date()
+        today_date    = now_ist().date()
         leave_display = leave_df.copy()
+
         def leave_status(row):
             try:
                 f = pd.to_datetime(row.get("Leave_From",""), dayfirst=True).date()
@@ -725,10 +1074,10 @@ with tab3:
                     return "❌ समाप्त"
             except:
                 return "—"
+
         leave_display["अवकाश स्थिति"] = leave_display.apply(leave_status, axis=1)
         st.dataframe(leave_display, use_container_width=True, hide_index=True, height=320)
 
-        # Download leave list
         col_ldl, _ = st.columns([1, 3])
         with col_ldl:
             st.download_button(
@@ -758,8 +1107,8 @@ with tab3:
                 sh     = client.open_by_key(SHEET_ID)
                 sh.worksheet("Leave").append_row([
                     l_mob,
-                    l_from.strftime("%d-%m-%Y"),   # Leave_From
-                    l_to.strftime("%d-%m-%Y"),     # Leave_To
+                    l_from.strftime("%d-%m-%Y"),
+                    l_to.strftime("%d-%m-%Y"),
                     l_reason,
                 ])
                 st.success(f"✅ अवकाश दर्ज हो गया! ({l_from.strftime('%d-%m-%Y')} से {l_to.strftime('%d-%m-%Y')} तक)")
@@ -791,7 +1140,6 @@ with tab4:
         a_df_sorted = a_df.sort_values("Date", ascending=False) if "Date" in a_df.columns else a_df
         st.dataframe(a_df_sorted, use_container_width=True, hide_index=True, height=360)
 
-        # Download audit log
         col_adl, _ = st.columns([1, 3])
         with col_adl:
             st.download_button(
@@ -839,10 +1187,11 @@ with tab5:
         st.rerun()
 
 # ── Footer ────────────────────────────────────────────────────────────────────
-st.markdown("---")
-st.markdown(
-    "<div style='text-align:center;color:#888;font-size:0.8rem;'>"
-    f"साइबर क्राइम हेल्पलाइन 1930 | ड्यूटी रोस्टर प्रणाली | {now_ist().strftime('%d-%m-%Y %H:%M')} IST"
-    "</div>",
-    unsafe_allow_html=True
-)
+st.markdown(f"""
+<div class="footer">
+  🚨 साइबर क्राइम हेल्पलाइन <strong>1930</strong> &nbsp;|&nbsp;
+  ड्यूटी रोस्टर प्रणाली &nbsp;|&nbsp;
+  <span class="live-dot"></span>
+  {now_ist().strftime('%d-%m-%Y %H:%M')} IST
+</div>
+""", unsafe_allow_html=True)
