@@ -20,29 +20,50 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# ✅ STEP 2: Password Protection
-def check_password():
-    def password_entered():
-        if st.session_state["password"] == st.secrets["passwords"]["app_password"]:
-            st.session_state["password_correct"] = True
-            del st.session_state["password"]
-        else:
-            st.session_state["password_correct"] = False
+# ✅ STEP 2: PASSWORD Protection
+def check_PASSWORD():
+    if "PASSWORD_correct" not in st.session_state:
+        st.session_state["PASSWORD_correct"] = False
 
-    if "password_correct" not in st.session_state:
-        st.text_input("🔐 Password daalo:", type="password",
-                      on_change=password_entered, key="password")
-        return False
-    elif not st.session_state["password_correct"]:
-        st.text_input("🔐 Password daalo:", type="password",
-                      on_change=password_entered, key="password")
-        st.error("❌ Galat password! Dobara try karo.")
-        return False
-    else:
-        return True
+    if not st.session_state["PASSWORD_correct"]:
+        st.markdown("""
+        <div style="
+            max-width: 400px;
+            margin: 80px auto 0 auto;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.10);
+            border-radius: 20px;
+            padding: 36px 32px;
+            text-align: center;
+        ">
+            <div style="font-size:2.5rem; margin-bottom:8px;">🔐</div>
+            <div style="font-size:1.2rem; font-weight:700; color:#e8f0ff; margin-bottom:4px;">
+                साइबर क्राइम 1930
+            </div>
+            <div style="font-size:0.8rem; color:#7a92b8; margin-bottom:24px; letter-spacing:1px;">
+                ड्यूटी रोस्टर प्रणाली
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
-# ✅ STEP 3: Password check
-if not check_password():
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            pwd = st.text_input("पासवर्ड दर्ज करें", type="PASSWORD", key="pwd_input",
+                                placeholder="••••••••")
+            login_btn = st.button("🔓 लॉगिन करें", use_container_width=True, key="login_btn")
+
+            if login_btn:
+                if pwd == st.secrets["PASSWORDs"]["app_PASSWORD"]:
+                    st.session_state["PASSWORD_correct"] = True
+                    st.rerun()
+                else:
+                    st.error("❌ गलत पासवर्ड! दोबारा कोशिश करें।")
+
+        return False
+    return True
+
+# ✅ STEP 3: PASSWORD check
+if not check_PASSWORD():
     st.stop()
 
 # ✅ STEP 4: Sheet ID hardcoded
@@ -623,6 +644,23 @@ hr {
     border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent-blue); }
+
+/* ══════════════════════════════════════════
+   FORCE DARK ON ALL TEXT INPUTS
+══════════════════════════════════════════ */
+div[data-testid="stTextInput"] input {
+    background-color: #0d1b3e !important;
+    color: #e8f0ff !important;
+    caret-color: #00d4ff !important;
+    border: 1px solid rgba(255,255,255,0.10) !important;
+}
+div[data-testid="stTextInput"] input::placeholder {
+    color: #7a92b8 !important;
+    opacity: 1 !important;
+}
+div[data-testid="stTextInput"] label p {
+    color: #e8f0ff !important;
+}
 
 /* ══════════════════════════════════════════
    PULSE ANIMATION for live dot
