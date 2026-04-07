@@ -20,12 +20,12 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# ✅ STEP 2: PASSWORD Protection
-def check_PASSWORD():
-    if "PASSWORD_correct" not in st.session_state:
-        st.session_state["PASSWORD_correct"] = False
+# ✅ STEP 2: password Protection
+def check_password():
+    if "password_correct" not in st.session_state:
+        st.session_state["password_correct"] = False
 
-    if not st.session_state["PASSWORD_correct"]:
+    if not st.session_state["password_correct"]:
         st.markdown("""
         <div style="
             max-width: 400px;
@@ -48,13 +48,13 @@ def check_PASSWORD():
 
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            pwd = st.text_input("पासवर्ड दर्ज करें", type="PASSWORD", key="pwd_input",
+            pwd = st.text_input("पासवर्ड दर्ज करें", type="password", key="pwd_input",
                                 placeholder="••••••••")
             login_btn = st.button("🔓 लॉगिन करें", use_container_width=True, key="login_btn")
 
             if login_btn:
-                if pwd == st.secrets["PASSWORDs"]["app_PASSWORD"]:
-                    st.session_state["PASSWORD_correct"] = True
+                if pwd == st.secrets["passwords"]["app_password"]:
+                    st.session_state["password_correct"] = True
                     st.rerun()
                 else:
                     st.error("❌ गलत पासवर्ड! दोबारा कोशिश करें।")
@@ -62,8 +62,8 @@ def check_PASSWORD():
         return False
     return True
 
-# ✅ STEP 3: PASSWORD check
-if not check_PASSWORD():
+# ✅ STEP 3: password check
+if not check_password():
     st.stop()
 
 # ✅ STEP 4: Sheet ID hardcoded
