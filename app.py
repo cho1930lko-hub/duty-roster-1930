@@ -1246,4 +1246,3 @@ st.markdown(f"""
   {now_ist().strftime('%d-%m-%Y %H:%M')} IST
 </div>
 """, unsafe_allow_html=True)
-
