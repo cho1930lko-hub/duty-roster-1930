@@ -40,12 +40,6 @@ def check_password():
         return False
     else:
         return True
-        if "attempts" not in st.session_state:
-    st.session_state["attempts"] = 0
-
-st.session_state["attempts"] += 1
-if st.session_state["attempts"] > 5:
-    st.stop()
 
 # ✅ STEP 3: Password check
 if not check_password():
