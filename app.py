@@ -357,6 +357,41 @@ hr{border-color:var(--glass-border)!important; margin:20px 0!important;}
   .login-sub { letter-spacing: 1px; }
 }
 
+/* Part 3: readable shift reports and download controls */
+.report-intro {
+  color: #91a7c9; font-size: .86rem; line-height: 1.65;
+  margin: 0 0 14px 2px;
+}
+.shift-report-card {
+  display: flex; flex-direction: column; align-items: stretch;
+  padding: 14px 18px 12px; margin: 12px 0 8px;
+  min-height: 0; text-align: left;
+}
+.shift-card-heading {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; flex-wrap: wrap; margin-bottom: 8px;
+}
+.shift-card-caption { color: #9bb0d0; font-size: .78rem; font-weight: 600; }
+.shift-report-card .count { font-size: 2.2rem; }
+.shift-report-card .unit { margin-top: 2px; }
+.stDownloadButton > button {
+  min-height: 48px !important;
+  white-space: normal !important;
+  line-height: 1.35 !important;
+  padding: 10px 12px !important;
+}
+@media (min-width: 900px) {
+  .shift-report-card { padding: 16px 20px 14px; }
+}
+@media (max-width: 640px) {
+  .report-intro { font-size: .78rem; margin-bottom: 10px; }
+  .shift-report-card { padding: 12px 13px 10px; margin-top: 9px; }
+  .shift-card-heading { align-items: flex-start; }
+  .shift-card-caption { font-size: .72rem; }
+  .shift-report-card .count { font-size: 1.9rem !important; }
+  .stDownloadButton > button { min-height: 44px !important; font-size: .78rem !important; }
+}
+
 /* Part 2: refined header and dashboard summary cards */
 .header-kicker {
   color: #8fa9d4; font-size: .68rem; font-weight: 700;
@@ -853,38 +888,83 @@ if run_clicked:
 tab1,tab2,tab3,tab4,tab5 = st.tabs(["📋 शिफ्ट-वाइज ड्यूटी","👥 सभी कर्मचारी","🌴 अवकाश सूची","📜 Audit Log","➕ कर्मचारी जोड़ें / संपादित करें"])
 
 with tab1:
-    shifts=[s for s in main_df[shift_col].dropna().unique() if str(s).strip()!=""]
+    def shift_sort_key(value):
+        digits = "".join(ch for ch in str(value) if ch.isdigit())
+        return (0, int(digits), str(value).casefold()) if digits else (1, 0, str(value).casefold())
+
+    shifts = sorted(
+        [str(s).strip() for s in main_df[shift_col].dropna().unique() if str(s).strip()],
+        key=shift_sort_key,
+    )
+    st.markdown(
+        '<p class="report-intro">शिफ्ट के अनुसार तैनात कर्मचारियों की सूची देखें और ज़रूरत के अनुसार रिपोर्ट डाउनलोड करें।</p>',
+        unsafe_allow_html=True,
+    )
     if not shifts:
-        st.info("अभी कोई ड्यूटी नहीं लगी है। ऊपर 'ड्यूटी लगाएं' बटन दबाएं।")
+        st.info("अभी कोई ड्यूटी नहीं लगी है। ऊपर ‘आज की ड्यूटी लगाएं’ बटन से प्रक्रिया शुरू करें।")
     else:
         st.markdown('<div class="section-title">📥 शिफ्ट रिपोर्ट डाउनलोड करें</div>', unsafe_allow_html=True)
-        dl_cols=[c for c in [mob_col,name_col,"Designation",shift_col,"Days_On_Duty"] if c in main_df.columns]
-        dc1,dc2,dc3,dc4=st.columns(4)
-        for col_widget, snum in [(dc1,"1"),(dc2,"2"),(dc3,"3")]:
-            sn=next((s for s in sorted(shifts) if snum in s),None)
-            if sn:
-                with col_widget:
-                    st.download_button(label=f"⬇️ {sn} डाउनलोड",
-                        data=df_to_excel_bytes(on_duty[on_duty[shift_col]==sn][dl_cols],sn),
-                        file_name=f"{sn}_{today_str_ist}.xlsx",
+        dl_cols = [c for c in [mob_col, name_col, "Designation", shift_col, "Days_On_Duty"] if c in main_df.columns]
+        dl_names = {
+            mob_col: "मोबाइल नंबर", name_col: "कर्मचारी का नाम", "Designation": "पद",
+            shift_col: "वर्तमान शिफ्ट", "Days_On_Duty": "ड्यूटी के दिन",
+        }
+        download_cols = st.columns(4)
+        for slot, snum in enumerate(("1", "2", "3")):
+            shift_name = next(
+                (s for s in shifts if "".join(ch for ch in s if ch.isdigit()) == snum),
+                None,
+            )
+            if shift_name:
+                with download_cols[slot]:
+                    shift_data = on_duty[on_duty[shift_col].astype(str).str.strip() == shift_name][dl_cols]
+                    st.download_button(
+                        label=f"⬇️ {shift_name} रिपोर्ट",
+                        data=df_to_excel_bytes(shift_data.rename(columns=dl_names), f"Shift_{snum}"),
+                        file_name=f"Shift_{snum}_{today_str_ist}.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        use_container_width=True)
-        with dc4:
-            st.download_button(label="⬇️ सभी शिफ्ट (एक साथ)",
-                data=df_to_excel_bytes(on_duty[dl_cols].copy(),"All_Shifts"),
+                        use_container_width=True,
+                        key=f"download_shift_{snum}",
+                    )
+        with download_cols[3]:
+            st.download_button(
+                label="⬇️ सभी शिफ्ट रिपोर्ट",
+                data=df_to_excel_bytes(on_duty[dl_cols].rename(columns=dl_names), "All_Shifts"),
                 file_name=f"All_Shifts_{today_str_ist}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True)
-        st.markdown("---")
-        shift_colors={0:("s1","sc-s1"),1:("s2","sc-s2"),2:("s3","sc-s3")}
-        cols=st.columns(len(shifts))
-        for idx,s in enumerate(sorted(shifts)):
-            s_df=on_duty[on_duty[shift_col]==s]
-            bc,cc=shift_colors.get(idx%3,("s1","sc-s1"))
-            with cols[idx]:
-                st.markdown(f'<div class="shift-card {cc}"><span class="shift-badge {bc}">{s}</span><div class="count">{len(s_df)}</div><div class="unit">कर्मचारी</div></div>',unsafe_allow_html=True)
-                dc=[c for c in [name_col,"Designation","Days_On_Duty"] if c in main_df.columns]
-                st.dataframe(on_duty[on_duty[shift_col]==s][dc].rename(columns={name_col:"नाम","Designation":"पद","Days_On_Duty":"दिन"}),use_container_width=True,hide_index=True)
+                use_container_width=True,
+                key="download_all_shifts",
+            )
+
+        st.markdown('<div class="section-title">👥 शिफ्ट के अनुसार कर्मचारी</div>', unsafe_allow_html=True)
+        shift_styles = {
+            "1": ("s1", "sc-s1"),
+            "2": ("s2", "sc-s2"),
+            "3": ("s3", "sc-s3"),
+        }
+        for shift_name in shifts:
+            shift_data = on_duty[on_duty[shift_col].astype(str).str.strip() == shift_name].copy()
+            shift_number = "".join(ch for ch in shift_name if ch.isdigit())
+            badge_class, card_class = shift_styles.get(shift_number, ("s1", "sc-s1"))
+            st.markdown(
+                f'<div class="shift-card shift-report-card {card_class}">'
+                f'<div class="shift-card-heading"><span class="shift-badge {badge_class}">{shift_name}</span>'
+                f'<span class="shift-card-caption">तैनात कर्मचारी</span></div>'
+                f'<div class="count">{len(shift_data)}</div>'
+                f'<div class="unit">कर्मचारी</div></div>',
+                unsafe_allow_html=True,
+            )
+            display_cols = [col for col in [name_col, "Designation", "Days_On_Duty", mob_col] if col in shift_data.columns]
+            display_names = {
+                name_col: "कर्मचारी का नाम", "Designation": "पद",
+                "Days_On_Duty": "ड्यूटी के दिन", mob_col: "मोबाइल नंबर",
+            }
+            st.dataframe(
+                shift_data[display_cols].rename(columns=display_names),
+                use_container_width=True,
+                hide_index=True,
+                height=min(420, max(110, 38 * (len(shift_data) + 1))),
+            )
 
 with tab2:
     st.markdown('<div class="section-title">👥 सम्पूर्ण कर्मचारी सूची</div>', unsafe_allow_html=True)
