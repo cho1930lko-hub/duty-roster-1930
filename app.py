@@ -349,17 +349,22 @@ def get_active_leave_ids(leave_df):
     today = now_ist().date()
     if leave_df.empty or "Mobile_No" not in leave_df.columns:
         return []
+    from_col = next((c for c in ("Leave_From", "From_Date") if c in leave_df.columns), None)
+    to_col = next((c for c in ("Leave_To", "To_Date") if c in leave_df.columns), None)
     active = []
     for _, row in leave_df.iterrows():
         mob = str(row.get("Mobile_No", "")).strip()
         if not mob:
             continue
         try:
-            from_date = pd.to_datetime(row.get("Leave_From", ""), dayfirst=True).date()
-            to_date   = pd.to_datetime(row.get("Leave_To",   ""), dayfirst=True).date()
+            if not from_col or not to_col:
+                raise ValueError("Leave date columns are missing")
+            from_date = pd.to_datetime(row.get(from_col, ""), dayfirst=True).date()
+            to_date = pd.to_datetime(row.get(to_col, ""), dayfirst=True).date()
             if from_date <= today <= to_date:
                 active.append(mob)
-        except:
+        except (TypeError, ValueError, OverflowError):
+            # Fail closed: malformed leave entries must not make an employee eligible for duty.
             active.append(mob)
     return active
 
@@ -592,12 +597,16 @@ with tab3:
         st.info("कोई कर्मचारी अवकाश पर नहीं है।")
     else:
         td=now_ist().date(); ld=leave_df.copy()
+        leave_from_col = next((c for c in ("Leave_From", "From_Date") if c in ld.columns), None)
+        leave_to_col = next((c for c in ("Leave_To", "To_Date") if c in ld.columns), None)
         def leave_status(row):
             try:
-                f=pd.to_datetime(row.get("Leave_From",""),dayfirst=True).date()
-                t=pd.to_datetime(row.get("Leave_To",""),dayfirst=True).date()
+                if not leave_from_col or not leave_to_col:
+                    return "⚠️ तारीख कॉलम नहीं मिले"
+                f=pd.to_datetime(row.get(leave_from_col,""),dayfirst=True).date()
+                t=pd.to_datetime(row.get(leave_to_col,""),dayfirst=True).date()
                 return "✅ आज सक्रिय" if f<=td<=t else ("⏳ आने वाली" if td<f else "❌ समाप्त")
-            except: return "—"
+            except (TypeError, ValueError, OverflowError): return "—"
         ld["अवकाश स्थिति"]=ld.apply(leave_status,axis=1)
         st.dataframe(ld,use_container_width=True,hide_index=True,height=320)
         cll,_=st.columns([1,3])
@@ -612,17 +621,34 @@ with tab3:
     st.markdown("**नया अवकाश जोड़ें**")
     lc1,lc2,lc3=st.columns(3)
     with lc1: l_mob=st.text_input("मोबाइल नं.",key="l_mob")
-    with lc2: l_from=st.date_input("से तारीख (Leave_From)",key="l_from")
-    with lc3: l_to=st.date_input("तक तारीख (Leave_To)",key="l_to")
+    with lc2: l_from=st.date_input("से तारीख",key="l_from")
+    with lc3: l_to=st.date_input("तक तारीख",key="l_to")
     l_reason=st.text_input("कारण",key="l_reason")
     if st.button("✅ अवकाश दर्ज करें"):
-        if l_mob:
+        if not l_mob.strip():
+            st.warning("मोबाइल नं. भरें।")
+        elif l_from > l_to:
+            st.warning("अवकाश की प्रारंभ तारीख, समाप्ति तारीख से बाद की नहीं हो सकती।")
+        else:
             try:
                 client=get_client(); sh=client.open_by_key(SHEET_ID)
-                sh.worksheet("Leave").append_row([l_mob,l_from.strftime("%d-%m-%Y"),l_to.strftime("%d-%m-%Y"),l_reason])
-                st.success(f"✅ अवकाश दर्ज हो गया!"); load_sheet_data.clear(); st.rerun()
+                leave_ws=sh.worksheet("Leave")
+                leave_headers=leave_ws.row_values(1)
+                from_col=next((c for c in ("Leave_From","From_Date") if c in leave_headers),None)
+                to_col=next((c for c in ("Leave_To","To_Date") if c in leave_headers),None)
+                reason_col=next((c for c in ("Leave_Reason","Reason") if c in leave_headers),None)
+                if "Mobile_No" not in leave_headers or not from_col or not to_col:
+                    raise ValueError("Leave शीट में Mobile_No, From_Date/Leave_From और To_Date/Leave_To हेडर आवश्यक हैं।")
+                leave_values={
+                    "Mobile_No":l_mob.strip(),
+                    from_col:l_from.strftime("%d-%m-%Y"),
+                    to_col:l_to.strftime("%d-%m-%Y"),
+                }
+                if reason_col:
+                    leave_values[reason_col]=l_reason.strip()
+                leave_ws.append_row([leave_values.get(h,"") for h in leave_headers],value_input_option="USER_ENTERED")
+                st.success("✅ अवकाश दर्ज हो गया!"); load_sheet_data.clear(); st.rerun()
             except Exception as e: st.error(f"Error: {e}")
-        else: st.warning("मोबाइल नं. भरें।")
 
 with tab4:
     st.markdown('<div class="section-title">📜 Audit Log</div>', unsafe_allow_html=True)
@@ -649,22 +675,55 @@ with tab4:
 with tab5:
     st.markdown('<div class="section-title">➕ नया कर्मचारी जोड़ें</div>', unsafe_allow_html=True)
     ec1,ec2=st.columns(2)
+    employee_headers=list(main_df.columns)
+    rank_col=next((c for c in ("Rank","Employee_Rank") if c in employee_headers),None)
+    pref_col=next((c for c in ("Shift_Preference","Shift_Pref") if c in employee_headers),None)
+    e_rank=""
+    e_shift_pref=""
     with ec1:
         e_mob=st.text_input("मोबाइल नं. *",key="e_mob")
         e_name=st.text_input("नाम (हिंदी) *",key="e_name")
         e_desig=st.text_input("पद / पदनाम",key="e_desig")
     with ec2:
-        e_rank=st.text_input("रैंक",key="e_rank")
+        if rank_col:
+            e_rank=st.text_input("रैंक",key="e_rank")
         e_status=st.selectbox("स्थिति",[1,0],format_func=lambda x:"सक्रिय" if x==1 else "निष्क्रिय")
-        e_shift_pref=st.selectbox("शिफ्ट वरीयता",["","Shift1","Shift2","Shift3"])
+        if pref_col:
+            e_shift_pref=st.selectbox("शिफ्ट वरीयता",["","Shift1","Shift2","Shift3"],key="e_shift_pref")
     if st.button("💾 कर्मचारी सहेजें"):
-        if e_mob and e_name:
+        if not e_mob.strip() or not e_name.strip():
+            st.warning("मोबाइल नं. और नाम ज़रूरी है।")
+        else:
             try:
                 client=get_client(); sh=client.open_by_key(SHEET_ID)
-                sh.worksheet("Main_Duty").append_row([e_mob,e_name,e_desig,e_rank,e_status,e_shift_pref,"",0,0,0,0,0])
-                st.success(f"✅ {e_name} जोड़ा गया!"); load_sheet_data.clear(); st.rerun()
+                main_ws=sh.worksheet("Main_Duty")
+                employee_headers=main_ws.row_values(1)
+                required_headers=("Mobile_No","Employee_Name","Designation","Current_Shift","Shift_Start_Date",
+                                  "Days_On_Duty","STATUS","Total_Duty_3M","Shift1count","Shift2count","Shift3count")
+                missing=[h for h in required_headers if h not in employee_headers]
+                if missing:
+                    raise ValueError("Main_Duty शीट में आवश्यक कॉलम नहीं मिले: " + ", ".join(missing))
+                employee_values={
+                    "Mobile_No":e_mob.strip(),
+                    "Employee_Name":e_name.strip(),
+                    "Designation":e_desig.strip(),
+                    "Current_Shift":"",
+                    "Shift_Start_Date":"",
+                    "Days_On_Duty":0,
+                    "STATUS":int(e_status),
+                    "Total_Duty_3M":0,
+                    "Shift1count":0,
+                    "Shift2count":0,
+                    "Shift3count":0,
+                }
+                if rank_col:
+                    employee_values[rank_col]=e_rank.strip()
+                if pref_col:
+                    employee_values[pref_col]=e_shift_pref
+                main_ws.append_row([employee_values.get(h,"") for h in employee_headers],
+                                  value_input_option="USER_ENTERED")
+                st.success(f"✅ {e_name.strip()} जोड़ा गया!"); load_sheet_data.clear(); st.rerun()
             except Exception as e: st.error(f"Error: {e}")
-        else: st.warning("मोबाइल नं. और नाम ज़रूरी है।")
     st.markdown("---")
     st.markdown('<div class="section-title">🔄 Cache रिफ्रेश करें</div>', unsafe_allow_html=True)
     if st.button("🔃 डेटा रिफ्रेश करें"):
@@ -731,10 +790,13 @@ if search_btn or (search_mobile and len(search_mobile.strip()) == 10):
                 lv=leave_df[leave_df["Mobile_No"].astype(str).str.strip()==emp_mob]
                 if not lv.empty:
                     lr=lv.iloc[0]
-                    reason_txt=f"&nbsp;|&nbsp; कारण: {lr.get('Leave_Reason','')}" if lr.get('Leave_Reason','') else ""
+                    leave_from_value=lr.get("Leave_From",lr.get("From_Date","—"))
+                    leave_to_value=lr.get("Leave_To",lr.get("To_Date","—"))
+                    leave_reason=lr.get("Leave_Reason",lr.get("Reason",""))
+                    reason_txt=f"&nbsp;|&nbsp; कारण: {leave_reason}" if leave_reason else ""
                     leave_html=f"""<div style="background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.25);
                         border-radius:10px;padding:10px 16px;margin-top:14px;font-size:0.83rem;color:#fb923c;">
-                        📅 अवकाश: <strong>{lr.get('Leave_From','—')}</strong> से <strong>{lr.get('Leave_To','—')}</strong> तक{reason_txt}
+                        📅 अवकाश: <strong>{leave_from_value}</strong> से <strong>{leave_to_value}</strong> तक{reason_txt}
                     </div>"""
 
             st.markdown(f"""
