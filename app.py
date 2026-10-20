@@ -113,9 +113,49 @@ html, body, [class*="css"] {
     animation: shimmer-text 4s linear infinite; letter-spacing: 1.5px; position: relative; z-index:1;
 }
 @keyframes shimmer-text { 0%{background-position:300% center} 100%{background-position:-300% center} }
+.magic-header-inner .header-kicker {
+    font-family:'Rajdhani',sans-serif; font-size:0.78rem; font-weight:700;
+    color:#a8c4ed; letter-spacing:4px; text-transform:uppercase;
+    margin-bottom:16px; position:relative; z-index:1;
+}
+.magic-header-inner .header-emblem {
+    display:inline-flex; align-items:center; justify-content:center;
+    width:64px; height:64px; margin:0 auto 14px; border-radius:20px;
+    font-size:2.2rem; background:rgba(0,212,255,.12);
+    border:1px solid rgba(0,212,255,.28); position:relative; z-index:1;
+}
+.magic-header-inner .owner-title {
+    font-family:'Rajdhani',sans-serif; font-size:clamp(2.7rem,5.4vw,4.7rem);
+    line-height:1.02; font-weight:900; margin:0 0 8px;
+    letter-spacing:1.5px; overflow-wrap:anywhere; position:relative; z-index:1;
+    background:linear-gradient(90deg,#67e8f9 0%,#e0f2fe 45%,#c4b5fd 100%);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+}
+.magic-header-inner .system-title {
+    font-family:'Rajdhani',sans-serif; font-size:clamp(1.35rem,3vw,2.25rem);
+    line-height:1.2; font-weight:800; letter-spacing:2px; color:#f0f7ff;
+    margin:0 0 16px; position:relative; z-index:1;
+}
+.magic-header-inner .hero-divider {
+    width:min(420px,70%); height:5px; border-radius:10px; margin:0 auto 16px;
+    background:linear-gradient(90deg,#ff8a00,#ffe600,#00ef9d,#00cfff,#b44cff);
+    position:relative; z-index:1;
+}
+.magic-header-inner .helpline-title {
+    font-size:clamp(1.35rem,2.7vw,2.15rem); line-height:1.3;
+    font-weight:900; color:#ffe77a; margin:0 0 12px; position:relative; z-index:1;
+}
 .magic-header-inner .subtitle {
-    font-size: 0.88rem; color: var(--text-muted); letter-spacing: 3px;
-    text-transform: uppercase; font-weight: 600; position: relative; z-index:1;
+    font-size: 0.88rem; color: #b8cbea; letter-spacing: 1px;
+    font-weight: 600; position: relative; z-index:1;
+}
+@media (max-width: 600px) {
+    .magic-header-inner { padding:24px 12px 22px; }
+    .magic-header-inner .header-kicker { font-size:.65rem; letter-spacing:2px; }
+    .magic-header-inner .header-emblem { width:54px; height:54px; font-size:1.9rem; }
+    .magic-header-inner .owner-title { letter-spacing:.5px; }
+    .magic-header-inner .system-title { letter-spacing:1px; }
+    .magic-header-inner .helpline-title { font-size:1.25rem; }
 }
 .header-badge {
     display: inline-block; background: rgba(0,212,255,0.12);
@@ -1162,9 +1202,12 @@ if st.session_state["app_theme"] == "☀️ लाइट":
 st.markdown("""
 <div class="magic-header-wrap">
   <div class="magic-header-inner">
-    <div class="header-kicker">UTTAR PRADESH • DUTY MANAGEMENT</div>
+    <div class="header-kicker">DUTY ROSTER • OFFICIAL DASHBOARD</div>
     <div class="header-emblem">🚨</div>
-    <h1>साइबर क्राइम हेल्पलाइन 1930</h1>
+    <h1 class="owner-title">ANKIT DIWEDI</h1>
+    <div class="system-title">DUTY MANAGEMENT SYSTEM</div>
+    <div class="hero-divider"></div>
+    <div class="helpline-title">साइबर क्राइम हेल्पलाइन 1930</div>
     <div class="subtitle">ड्यूटी रोस्टर प्रबंधन प्रणाली</div>
     <div class="header-badge"><span class="live-dot"></span>डैशबोर्ड तैयार</div>
   </div>
