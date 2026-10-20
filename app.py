@@ -357,6 +357,49 @@ hr{border-color:var(--glass-border)!important; margin:20px 0!important;}
   .login-sub { letter-spacing: 1px; }
 }
 
+/* Part 1 UI polish: consistent spacing, readable controls, mobile-first dashboard */
+.stApp { overflow-x: hidden; }
+.main .block-container { width: 100%; }
+[data-testid="stSidebar"] { min-width: 0 !important; }
+[data-testid="stMetric"] {
+  background: rgba(255,255,255,.035);
+  border: 1px solid rgba(255,255,255,.09);
+  padding: 12px 14px;
+  border-radius: 12px;
+}
+.stTextInput input, .stTextArea textarea, .stSelectbox [role="combobox"],
+.stDateInput input, .stNumberInput input {
+  min-height: 42px !important;
+}
+.stButton > button, .stDownloadButton > button {
+  min-height: 42px;
+  font-weight: 700 !important;
+  letter-spacing: .1px;
+}
+.stTabs [data-baseweb="tab-highlight"] { background-color: var(--accent-cyan) !important; }
+.stTabs [data-baseweb="tab-border"] { background: transparent !important; }
+[data-testid="stDataFrame"] { width: 100% !important; }
+[data-testid="stDataFrame"] iframe { max-width: 100% !important; }
+.stAlert p { line-height: 1.55; }
+@media (max-width: 640px) {
+  /* Avoid a permanently reserved desktop-style sidebar gutter on narrow screens. */
+  section[data-testid="stSidebar"] { width: min(86vw, 320px) !important; }
+  .main .block-container { padding-left: .65rem !important; padding-right: .65rem !important; }
+  [data-testid="stHorizontalBlock"] { gap: .55rem !important; }
+  [data-testid="stHorizontalBlock"] > [data-testid="column"] {
+    min-width: min(100%, 135px) !important;
+    flex: 1 1 135px !important;
+  }
+  .metric-card { padding: 12px 6px !important; }
+  .metric-card .val { font-size: clamp(1.45rem, 7vw, 1.9rem) !important; }
+  .metric-card .lbl { overflow-wrap: anywhere; }
+  .shift-card { padding: 12px 6px 9px !important; }
+  .shift-card .count { font-size: clamp(1.6rem, 7vw, 2rem) !important; }
+  .stTabs [data-baseweb="tab-list"] { justify-content: flex-start !important; }
+  .stTabs [data-baseweb="tab"] { flex-shrink: 0 !important; }
+  [data-testid="stDataFrame"] { font-size: .8rem !important; }
+}
+
 /* Respect accessibility preferences and avoid motion on reduced-motion devices. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
