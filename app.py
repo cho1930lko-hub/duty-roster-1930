@@ -357,6 +357,27 @@ hr{border-color:var(--glass-border)!important; margin:20px 0!important;}
   .login-sub { letter-spacing: 1px; }
 }
 
+/* Part 4: employee directory and leave management */
+.directory-intro {
+  color: #91a7c9; font-size: .84rem; line-height: 1.65;
+  margin: 0 0 12px 2px;
+}
+.directory-count {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin: 10px 0; padding: 11px 14px; border-radius: 12px;
+  border: 1px solid rgba(0,212,255,.16);
+  background: linear-gradient(110deg, rgba(0,212,255,.07), rgba(255,255,255,.025));
+  color: #c8d8f0; font-size: .8rem;
+}
+.directory-count strong { color: #67e8f9; font-size: 1.25rem; }
+.directory-count-muted { color: #91a7c9; margin-left: auto; }
+@media (max-width: 640px) {
+  .directory-intro { font-size: .77rem; }
+  .directory-count { gap: 7px; padding: 10px 11px; font-size: .75rem; }
+  .directory-count strong { font-size: 1.1rem; }
+  .directory-count-muted { width: 100%; margin-left: 0; }
+}
+
 /* Part 3: readable shift reports and download controls */
 .report-intro {
   color: #91a7c9; font-size: .86rem; line-height: 1.65;
@@ -967,89 +988,193 @@ with tab1:
             )
 
 with tab2:
-    st.markdown('<div class="section-title">👥 सम्पूर्ण कर्मचारी सूची</div>', unsafe_allow_html=True)
-    cs,cf=st.columns([2,1])
-    with cs: search=st.text_input("🔍 नाम / मोबाइल खोजें",placeholder="नाम टाइप करें...")
-    with cf: status_filter=st.selectbox("स्थिति",["सभी","ड्यूटी पर","अवकाश पर","प्रतीक्षारत","निष्क्रिय"])
-    disp=main_df.copy()
-    if search:
-        mask=disp[name_col].str.contains(search,case=False,na=False)
-        if mob_col in disp.columns: mask|=disp[mob_col].str.contains(search,na=False)
-        disp=disp[mask]
-    if status_filter=="ड्यूटी पर": disp=disp[disp[shift_col].str.strip()!=""]
-    elif status_filter=="अवकाश पर": disp=disp[disp[mob_col].isin(leave_ids)]
-    elif status_filter=="प्रतीक्षारत": disp=disp[(disp[shift_col].str.strip()=="")&(~disp[mob_col].isin(leave_ids))&(disp[status_col]==1)]
-    elif status_filter=="निष्क्रिय": disp=disp[disp[status_col]==0]
-    sc=[c for c in [mob_col,name_col,"Designation",shift_col,"Days_On_Duty","Total_Duty_3M",status_col] if c in disp.columns]
-    rm={mob_col:"मोबाइल",name_col:"नाम","Designation":"पद",shift_col:"वर्तमान शिफ्ट","Days_On_Duty":"दिन","Total_Duty_3M":"3M ड्यूटी",status_col:"स्थिति"}
-    st.dataframe(disp[sc].rename(columns=rm),use_container_width=True,hide_index=True,height=380)
-    cd1,cd2=st.columns([1,3])
-    with cd1:
-        st.download_button(label="⬇️ पूरी सूची डाउनलोड (.xlsx)",
-            data=df_to_excel_bytes(disp[sc].rename(columns=rm),"Staff_List"),
+    st.markdown('<div class="section-title">👥 कर्मचारी निर्देशिका</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<p class="directory-intro">नाम या मोबाइल से खोजें, फिर स्थिति के अनुसार सूची को छाँटें।</p>',
+        unsafe_allow_html=True,
+    )
+    search_col, filter_col = st.columns([2, 1])
+    with search_col:
+        search = st.text_input(
+            "🔎 कर्मचारी खोजें",
+            placeholder="नाम या मोबाइल नंबर लिखें",
+            key="staff_directory_search",
+        )
+    with filter_col:
+        status_filter = st.selectbox(
+            "कर्मचारी की स्थिति",
+            ["सभी", "ड्यूटी पर", "अवकाश पर", "प्रतीक्षारत", "निष्क्रिय"],
+            key="staff_directory_status",
+        )
+    disp = main_df.copy()
+    if search.strip():
+        query = search.strip()
+        name_mask = disp[name_col].astype(str).str.contains(query, case=False, na=False, regex=False)
+        mobile_mask = disp[mob_col].astype(str).str.contains(query, na=False, regex=False) if mob_col in disp.columns else False
+        disp = disp[name_mask | mobile_mask]
+    if status_filter == "ड्यूटी पर":
+        disp = disp[disp[shift_col].astype(str).str.strip() != ""]
+    elif status_filter == "अवकाश पर":
+        disp = disp[disp[mob_col].isin(leave_ids)]
+    elif status_filter == "प्रतीक्षारत":
+        disp = disp[(disp[shift_col].astype(str).str.strip() == "") & (~disp[mob_col].isin(leave_ids)) & (disp[status_col] == 1)]
+    elif status_filter == "निष्क्रिय":
+        disp = disp[disp[status_col] == 0]
+
+    display_cols = [col for col in [mob_col, name_col, "Designation", shift_col, "Days_On_Duty", "Total_Duty_3M", status_col] if col in disp.columns]
+    display_names = {
+        mob_col: "मोबाइल नंबर", name_col: "कर्मचारी का नाम", "Designation": "पद",
+        shift_col: "वर्तमान शिफ्ट", "Days_On_Duty": "ड्यूटी के दिन",
+        "Total_Duty_3M": "3 माह की ड्यूटी", status_col: "सक्रिय स्थिति",
+    }
+    display_df = disp[display_cols].rename(columns=display_names)
+    total_staff = len(main_df)
+    filtered_count = len(display_df)
+    st.markdown(
+        f'<div class="directory-count"><span>दिखाए जा रहे कर्मचारी</span><strong>{filtered_count}</strong>'
+        f'<span class="directory-count-muted">कुल पंजीकृत: {total_staff}</span></div>',
+        unsafe_allow_html=True,
+    )
+    st.dataframe(
+        display_df,
+        use_container_width=True,
+        hide_index=True,
+        height=min(480, max(140, 38 * (filtered_count + 1))),
+    )
+    export_col, _ = st.columns([1, 2])
+    with export_col:
+        st.download_button(
+            label="⬇️ फ़िल्टर की गई सूची डाउनलोड करें",
+            data=df_to_excel_bytes(display_df, "Staff_List"),
             file_name=f"Staff_List_{today_str_ist}.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            use_container_width=True)
-    st.caption(f"कुल: {len(disp)} कर्मचारी")
+            use_container_width=True,
+            key="download_filtered_staff",
+        )
+    st.caption("नोट: डाउनलोड में वही कर्मचारी आएँगे जो वर्तमान खोज और फ़िल्टर से मेल खाते हैं।")
 
 with tab3:
-    st.markdown('<div class="section-title">🌴 अवकाश पर कर्मचारी</div>', unsafe_allow_html=True)
-    if leave_df.empty:
-        st.info("कोई कर्मचारी अवकाश पर नहीं है।")
+    st.markdown('<div class="section-title">🌴 अवकाश प्रबंधन</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<p class="directory-intro">अवकाश की तारीख, स्थिति और कारण देखें। नया अवकाश दर्ज करने से पहले मोबाइल नंबर जाँच लें।</p>',
+        unsafe_allow_html=True,
+    )
+    td = now_ist().date()
+    ld = leave_df.copy()
+    leave_from_col = next((col for col in ("Leave_From", "From_Date") if col in ld.columns), None)
+    leave_to_col = next((col for col in ("Leave_To", "To_Date") if col in ld.columns), None)
+
+    def leave_status(row):
+        try:
+            if not leave_from_col or not leave_to_col:
+                return "⚠️ तारीख कॉलम उपलब्ध नहीं"
+            start_date = pd.to_datetime(row.get(leave_from_col, ""), dayfirst=True, errors="raise").date()
+            end_date = pd.to_datetime(row.get(leave_to_col, ""), dayfirst=True, errors="raise").date()
+            if start_date > end_date:
+                return "⚠️ तारीख जाँचें"
+            return "✅ आज सक्रिय" if start_date <= td <= end_date else ("⏳ आने वाला" if td < start_date else "◯ समाप्त")
+        except (TypeError, ValueError, OverflowError):
+            return "⚠️ तारीख जाँचें"
+
+    if ld.empty:
+        st.info("अभी अवकाश सूची में कोई रिकॉर्ड नहीं है। नीचे से नया अवकाश दर्ज कर सकते हैं।")
     else:
-        td=now_ist().date(); ld=leave_df.copy()
-        leave_from_col = next((c for c in ("Leave_From", "From_Date") if c in ld.columns), None)
-        leave_to_col = next((c for c in ("Leave_To", "To_Date") if c in ld.columns), None)
-        def leave_status(row):
-            try:
-                if not leave_from_col or not leave_to_col:
-                    return "⚠️ तारीख कॉलम नहीं मिले"
-                f=pd.to_datetime(row.get(leave_from_col,""),dayfirst=True).date()
-                t=pd.to_datetime(row.get(leave_to_col,""),dayfirst=True).date()
-                return "✅ आज सक्रिय" if f<=td<=t else ("⏳ आने वाली" if td<f else "❌ समाप्त")
-            except (TypeError, ValueError, OverflowError): return "—"
-        ld["अवकाश स्थिति"]=ld.apply(leave_status,axis=1)
-        st.dataframe(ld,use_container_width=True,hide_index=True,height=320)
-        cll,_=st.columns([1,3])
-        with cll:
-            st.download_button(label="⬇️ अवकाश सूची डाउनलोड (.xlsx)",
-                data=df_to_excel_bytes(ld,"Leave_List"),
-                file_name=f"Leave_List_{today_str_ist}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True)
-        st.caption(f"कुल अवकाश: {len(leave_df)}")
-    st.markdown("---")
-    st.markdown("**नया अवकाश जोड़ें**")
-    lc1,lc2,lc3=st.columns(3)
-    with lc1: l_mob=st.text_input("मोबाइल नं.",key="l_mob")
-    with lc2: l_from=st.date_input("से तारीख",key="l_from")
-    with lc3: l_to=st.date_input("तक तारीख",key="l_to")
-    l_reason=st.text_input("कारण",key="l_reason")
-    if st.button("✅ अवकाश दर्ज करें"):
+        ld["अवकाश स्थिति"] = ld.apply(leave_status, axis=1)
+        mobile_col = "Mobile_No" if "Mobile_No" in ld.columns else None
+        leave_search = st.text_input(
+            "🔎 अवकाश रिकॉर्ड खोजें",
+            placeholder="मोबाइल नंबर या कारण लिखें",
+            key="leave_directory_search",
+        )
+        if leave_search.strip():
+            query = leave_search.strip()
+            matches = pd.Series(False, index=ld.index)
+            for column in [mobile_col, "Leave_Reason", "Reason"]:
+                if column and column in ld.columns:
+                    matches |= ld[column].astype(str).str.contains(query, case=False, na=False, regex=False)
+            ld = ld[matches]
+        leave_display = ld.rename(columns={
+            "Mobile_No": "मोबाइल नंबर", "Leave_From": "अवकाश प्रारंभ",
+            "From_Date": "अवकाश प्रारंभ", "Leave_To": "अवकाश समाप्त",
+            "To_Date": "अवकाश समाप्त", "Leave_Reason": "कारण", "Reason": "कारण",
+        })
+        st.markdown(
+            f'<div class="directory-count"><span>मिलान वाले अवकाश रिकॉर्ड</span><strong>{len(leave_display)}</strong></div>',
+            unsafe_allow_html=True,
+        )
+        st.dataframe(
+            leave_display,
+            use_container_width=True,
+            hide_index=True,
+            height=min(420, max(140, 38 * (len(leave_display) + 1))),
+        )
+        st.download_button(
+            label="⬇️ अवकाश सूची डाउनलोड करें",
+            data=df_to_excel_bytes(leave_display, "Leave_List"),
+            file_name=f"Leave_List_{today_str_ist}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            use_container_width=True,
+            key="download_leave_list",
+        )
+
+    st.markdown('<div class="section-title">➕ नया अवकाश दर्ज करें</div>', unsafe_allow_html=True)
+    with st.form("new_leave_form", clear_on_submit=True):
+        leave_mobile_col, leave_dates_col = st.columns([1, 2])
+        with leave_mobile_col:
+            l_mob = st.text_input("कर्मचारी का मोबाइल नंबर", key="l_mob")
+        with leave_dates_col:
+            l_from, l_to = st.columns(2)
+            with l_from:
+                l_start = st.date_input("अवकाश शुरू", value=td, key="l_from")
+            with l_to:
+                l_end = st.date_input("अवकाश समाप्त", value=td, key="l_to")
+        l_reason = st.text_input("अवकाश का कारण", key="l_reason")
+        leave_submitted = st.form_submit_button("✅ अवकाश दर्ज करें", use_container_width=True)
+
+    if leave_submitted:
         if not l_mob.strip():
-            st.warning("मोबाइल नं. भरें।")
-        elif l_from > l_to:
-            st.warning("अवकाश की प्रारंभ तारीख, समाप्ति तारीख से बाद की नहीं हो सकती।")
+            st.warning("कर्मचारी का मोबाइल नंबर भरें।")
+        elif l_start > l_end:
+            st.warning("अवकाश शुरू होने की तारीख, समाप्ति तारीख से बाद की नहीं हो सकती।")
         else:
             try:
-                client=get_client(); sh=client.open_by_key(SHEET_ID)
-                leave_ws=sh.worksheet("Leave")
-                leave_headers=leave_ws.row_values(1)
-                from_col=next((c for c in ("Leave_From","From_Date") if c in leave_headers),None)
-                to_col=next((c for c in ("Leave_To","To_Date") if c in leave_headers),None)
-                reason_col=next((c for c in ("Leave_Reason","Reason") if c in leave_headers),None)
+                client = get_client()
+                sh = client.open_by_key(SHEET_ID)
+                leave_ws = sh.worksheet("Leave")
+                leave_headers = leave_ws.row_values(1)
+                from_col = next((col for col in ("Leave_From", "From_Date") if col in leave_headers), None)
+                to_col = next((col for col in ("Leave_To", "To_Date") if col in leave_headers), None)
+                reason_col = next((col for col in ("Leave_Reason", "Reason") if col in leave_headers), None)
                 if "Mobile_No" not in leave_headers or not from_col or not to_col:
                     raise ValueError("Leave शीट में Mobile_No, From_Date/Leave_From और To_Date/Leave_To हेडर आवश्यक हैं।")
-                leave_values={
-                    "Mobile_No":l_mob.strip(),
-                    from_col:l_from.strftime("%d-%m-%Y"),
-                    to_col:l_to.strftime("%d-%m-%Y"),
+                normalized_mobile = "".join(ch for ch in l_mob if ch.isdigit())
+                if len(normalized_mobile) == 12 and normalized_mobile.startswith("91"):
+                    normalized_mobile = normalized_mobile[2:]
+                if len(normalized_mobile) != 10:
+                    raise ValueError("मोबाइल नंबर 10 अंकों का होना चाहिए।")
+                existing_numbers = {
+                    "".join(ch for ch in str(value) if ch.isdigit())[-10:]
+                    for value in leave_ws.col_values(leave_headers.index("Mobile_No") + 1)[1:]
+                    if "".join(ch for ch in str(value) if ch.isdigit())
+                }
+                if normalized_mobile in existing_numbers:
+                    raise ValueError("इस मोबाइल नंबर का अवकाश रिकॉर्ड पहले से मौजूद है।")
+                leave_values = {
+                    "Mobile_No": normalized_mobile,
+                    from_col: l_start.strftime("%d-%m-%Y"),
+                    to_col: l_end.strftime("%d-%m-%Y"),
                 }
                 if reason_col:
-                    leave_values[reason_col]=l_reason.strip()
-                leave_ws.append_row([leave_values.get(h,"") for h in leave_headers],value_input_option="USER_ENTERED")
-                st.success("✅ अवकाश दर्ज हो गया!"); load_sheet_data.clear(); st.rerun()
-            except Exception as e: st.error(f"Error: {e}")
+                    leave_values[reason_col] = l_reason.strip()
+                leave_ws.append_row(
+                    [leave_values.get(header, "") for header in leave_headers],
+                    value_input_option="USER_ENTERED",
+                )
+                st.success("अवकाश सफलतापूर्वक दर्ज हो गया।")
+                load_sheet_data.clear()
+                st.rerun()
+            except Exception as e:
+                st.error(f"अवकाश दर्ज नहीं हो सका: {e}")
 
 with tab4:
     st.markdown('<div class="section-title">📜 Audit Log</div>', unsafe_allow_html=True)
