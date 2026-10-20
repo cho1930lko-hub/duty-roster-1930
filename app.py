@@ -393,14 +393,20 @@ def run_assignment(sheet_id):
     shift_col="Current_Shift"; date_col="Shift_Start_Date"; days_col="Days_On_Duty"
     duty_count_col="Total_Duty_3M"; s1_cnt,s2_cnt,s3_cnt="Shift1count","Shift2count","Shift3count"
 
-    if mob_col not in df.columns:
-        return False, f"❌ Column '{mob_col}' नहीं मिला।"
+    required_cols = [mob_col, name_col, status_col, shift_col, date_col, days_col,
+                     duty_count_col, s1_cnt, s2_cnt, s3_cnt]
+    missing_cols = [c for c in required_cols if c not in df.columns]
+    if missing_cols:
+        return False, "❌ Main_Duty में आवश्यक कॉलम नहीं मिले: " + ", ".join(missing_cols)
+    if df.empty:
+        return False, "❌ Main_Duty में कोई कर्मचारी रिकॉर्ड नहीं है।"
 
     df[mob_col] = df[mob_col].astype(str).str.strip()
     df.set_index(mob_col, inplace=True)
     for c in [status_col, duty_count_col, s1_cnt, s2_cnt, s3_cnt, days_col]:
-        if c in df.columns:
-            df[c] = pd.to_numeric(df[c], errors="coerce").fillna(0).astype(int)
+        df[c] = pd.to_numeric(df[c], errors="coerce").fillna(0).astype(int)
+    df[shift_col] = df[shift_col].fillna("").astype(str).str.strip()
+    df[date_col] = df[date_col].fillna("").astype(str).str.strip()
 
     shift_rules = {}
     for row in config_ws.get_all_values()[1:]:
@@ -413,31 +419,64 @@ def run_assignment(sheet_id):
     logs = []
 
     for mobile, row in df.iterrows():
-        if not row[shift_col] or str(row[shift_col]).strip() == "":
-            df.at[mobile, days_col] = 0; continue
+        current_shift = str(row[shift_col]).strip()
+        if not current_shift:
+            df.at[mobile, days_col] = 0
+            continue
+
+        # Safety removals must not depend on the shift-start date being valid.
+        inactive = int(row[status_col]) != 1
+        on_leave = mobile in leave_list
+        if inactive or on_leave:
+            logs.append([today_str,now_time,mobile,row[name_col],"Removed",current_shift,"Success"])
+            df.at[mobile,shift_col]=""
+            df.at[mobile,date_col]=""
+            df.at[mobile,days_col]=0
+            continue
+
         try:
-            start_date = pd.to_datetime(row[date_col], dayfirst=True).date()
+            start_date = pd.to_datetime(row[date_col], dayfirst=True, errors="raise").date()
             diff = (today_dt.date() - start_date).days
             df.at[mobile, days_col] = max(0, diff)
-            rule = shift_rules.get(row[shift_col])
-            if (rule and diff >= rule["max"]) or (mobile in leave_list) or (row[status_col] == 0):
-                logs.append([today_str,now_time,mobile,row[name_col],"Removed",row[shift_col],"Success"])
-                df.at[mobile,shift_col]=""; df.at[mobile,date_col]=""; df.at[mobile,days_col]=0
-        except:
+            rule = shift_rules.get(current_shift)
+            if diff < 0:
+                # Future start dates are invalid; do not let them bypass rotation limits.
+                df.at[mobile, days_col] = 0
+            elif rule and diff >= rule["max"]:
+                logs.append([today_str,now_time,mobile,row[name_col],"Removed",current_shift,"Success"])
+                df.at[mobile,shift_col]=""
+                df.at[mobile,date_col]=""
+                df.at[mobile,days_col]=0
+        except (TypeError, ValueError, OverflowError):
+            # Keep the current assignment rather than silently resetting its duty age.
+            # Invalid dates are surfaced via a zero-day display and should be corrected in the sheet.
             df.at[mobile, days_col] = 0
 
+    staffing_shortfalls = []
     for s_name, rule in shift_rules.items():
-        needed = rule["req"] - len(df[df[shift_col]==s_name])
+        needed = int(rule["req"]) - int((df[shift_col].astype(str).str.strip() == str(s_name).strip()).sum())
         if needed > 0:
-            pool = df[(df[status_col]==1) & (df[shift_col]=="") & (~df.index.isin(leave_list))]
-            if pool.empty: continue
+            pool = df[
+                (df[status_col] == 1)
+                & (df[shift_col].astype(str).str.strip() == "")
+                & (~df.index.isin(leave_list))
+            ]
+            if pool.empty:
+                staffing_shortfalls.append(f"{s_name}: {needed}")
+                continue
             t_cnt = s1_cnt if "1" in s_name else (s2_cnt if "2" in s_name else s3_cnt)
-            sort_cols = [t_cnt, duty_count_col] if t_cnt in df.columns else [duty_count_col]
-            for m in pool.sort_values(by=sort_cols).head(needed).index:
-                df.at[m,shift_col]=s_name; df.at[m,date_col]=today_str; df.at[m,days_col]=0
+            sort_cols = [t_cnt, duty_count_col]
+            selected = pool.sort_values(by=sort_cols).head(needed).index
+            for m in selected:
+                df.at[m,shift_col]=s_name
+                df.at[m,date_col]=today_str
+                df.at[m,days_col]=0
                 df.at[m,duty_count_col]+=1
-                if t_cnt in df.columns: df.at[m,t_cnt]+=1
+                df.at[m,t_cnt]+=1
                 logs.append([today_str,now_time,m,df.at[m,name_col],"Assigned",s_name,"Success"])
+            remaining = needed - len(selected)
+            if remaining > 0:
+                staffing_shortfalls.append(f"{s_name}: {remaining}")
 
     df_export = df.reset_index()
     final_data = [df_export.columns.values.tolist()] + df_export.fillna("").values.tolist()
@@ -445,6 +484,10 @@ def run_assignment(sheet_id):
     main_ws.update(values=[[today_str]], range_name="L1")
     if logs: audit_ws.append_rows(logs)
     load_sheet_data.clear()
+    if staffing_shortfalls:
+        shortfall_text = " | ".join(staffing_shortfalls)
+        return True, (f"⚠️ {today_str} की ड्यूटी प्रक्रिया पूरी हुई, लेकिन कुछ शिफ्टों में स्टाफ कम है: "
+                      f"{shortfall_text} कर्मचारी कम। कुल {len(logs)} बदलाव हुए।")
     return True, f"✅ {today_str} की ड्यूटी सफलतापूर्वक लग गई! कुल {len(logs)} बदलाव हुए।"
 
 def df_to_excel_bytes(df, sheet_name="Sheet1"):
