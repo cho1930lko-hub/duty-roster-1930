@@ -409,10 +409,24 @@ def run_assignment(sheet_id):
     df[date_col] = df[date_col].fillna("").astype(str).str.strip()
 
     shift_rules = {}
-    for row in config_ws.get_all_values()[1:]:
-        if row[0]:
-            try: shift_rules[row[0]] = {"req":int(float(row[1])),"max":int(float(row[3]))}
-            except: continue
+    invalid_shift_configs = []
+    for row_number, row in enumerate(config_ws.get_all_values()[1:], start=2):
+        if not row or not str(row[0]).strip():
+            continue
+        shift_name = str(row[0]).strip()
+        try:
+            if len(row) < 4:
+                raise ValueError("चार कॉन्फ़िगरेशन कॉलम उपलब्ध नहीं हैं")
+            required_staff = int(float(row[1]))
+            max_days = int(float(row[3]))
+            if required_staff < 0 or max_days <= 0:
+                raise ValueError("Required staff शून्य से कम या Max days शून्य/ऋणात्मक है")
+            shift_rules[shift_name] = {"req": required_staff, "max": max_days}
+        except (TypeError, ValueError, OverflowError):
+            invalid_shift_configs.append(f"पंक्ति {row_number} ({shift_name})")
+
+    if not shift_rules:
+        return False, "❌ Config शीट में कोई मान्य शिफ्ट नियम नहीं मिला। Required Staff और Max Days जांचें।"
 
     leave_data = pd.DataFrame(leave_ws.get_all_records())
     leave_list = get_active_leave_ids(leave_data)
@@ -464,7 +478,14 @@ def run_assignment(sheet_id):
             if pool.empty:
                 staffing_shortfalls.append(f"{s_name}: {needed}")
                 continue
-            t_cnt = s1_cnt if "1" in s_name else (s2_cnt if "2" in s_name else s3_cnt)
+            # Select the counter for this exact shift number; never silently use Shift3
+            # as a fallback for an unrecognized shift name.
+            shift_number = "".join(ch for ch in str(s_name) if ch.isdigit())
+            shift_counter_map = {"1": s1_cnt, "2": s2_cnt, "3": s3_cnt}
+            t_cnt = shift_counter_map.get(shift_number)
+            if t_cnt is None:
+                staffing_shortfalls.append(f"{s_name}: {needed} (शिफ्ट नाम/काउंटर कॉन्फ़िगरेशन जांचें)")
+                continue
             sort_cols = [t_cnt, duty_count_col]
             selected = pool.sort_values(by=sort_cols).head(needed).index
             for m in selected:
@@ -484,10 +505,15 @@ def run_assignment(sheet_id):
     main_ws.update(values=[[today_str]], range_name="L1")
     if logs: audit_ws.append_rows(logs)
     load_sheet_data.clear()
+    messages = []
+    if invalid_shift_configs:
+        messages.append("⚠️ Config की अमान्य पंक्तियां: " + ", ".join(invalid_shift_configs))
     if staffing_shortfalls:
         shortfall_text = " | ".join(staffing_shortfalls)
-        return True, (f"⚠️ {today_str} की ड्यूटी प्रक्रिया पूरी हुई, लेकिन कुछ शिफ्टों में स्टाफ कम है: "
-                      f"{shortfall_text} कर्मचारी कम। कुल {len(logs)} बदलाव हुए।")
+        messages.append("⚠️ कुछ शिफ्टों में स्टाफ/काउंटर की समस्या: " + shortfall_text)
+    if messages:
+        return True, (f"⚠️ {today_str} की ड्यूटी प्रक्रिया पूरी हुई। "
+                      + " ".join(messages) + f" कुल {len(logs)} बदलाव हुए।")
     return True, f"✅ {today_str} की ड्यूटी सफलतापूर्वक लग गई! कुल {len(logs)} बदलाव हुए।"
 
 def df_to_excel_bytes(df, sheet_name="Sheet1"):
