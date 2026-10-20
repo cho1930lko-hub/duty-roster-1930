@@ -357,6 +357,21 @@ hr{border-color:var(--glass-border)!important; margin:20px 0!important;}
   .login-sub { letter-spacing: 1px; }
 }
 
+/* Part 5: audit log, employee forms, and final responsive polish */
+.audit-filter-note {
+  color: #91a7c9; font-size: .78rem; line-height: 1.5;
+}
+.employee-form-note {
+  color: #91a7c9; font-size: .78rem; line-height: 1.55;
+  margin: 2px 0 12px;
+}
+@media (max-width: 640px) {
+  .stForm [data-testid="stFormSubmitButton"] button,
+  .stFormSubmitButton button { width: 100% !important; min-height: 46px !important; }
+  [data-testid="stTextInputRootElement"] input { font-size: 16px !important; }
+  .directory-count { overflow-wrap: anywhere; }
+}
+
 /* Part 4: employee directory and leave management */
 .directory-intro {
   color: #91a7c9; font-size: .84rem; line-height: 1.65;
@@ -1172,26 +1187,56 @@ with tab3:
                 st.error(f"अवकाश दर्ज नहीं हो सका: {e}")
 
 with tab4:
-    st.markdown('<div class="section-title">📜 Audit Log</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">📜 ड्यूटी गतिविधि लॉग</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<p class="directory-intro">ड्यूटी आवंटन और हटाने की गतिविधियों को तारीख व कार्रवाई के आधार पर देखें।</p>',
+        unsafe_allow_html=True,
+    )
     if audit_df.empty:
-        st.info("अभी कोई लॉग नहीं है।")
+        st.info("अभी कोई Audit Log रिकॉर्ड उपलब्ध नहीं है।")
     else:
-        ac1,ac2=st.columns([1,1])
-        with ac1: date_filter=st.text_input("तारीख फ़िल्टर (DD-MM-YYYY)",placeholder="जैसे: 15-06-2025")
-        with ac2: action_filter=st.selectbox("Action",["सभी","Assigned","Removed"])
-        a_df=audit_df.copy()
-        if date_filter: a_df=a_df[a_df["Date"].str.contains(date_filter,na=False)]
-        if action_filter!="सभी": a_df=a_df[a_df["Action"]==action_filter]
-        a_df_sorted=a_df.sort_values("Date",ascending=False) if "Date" in a_df.columns else a_df
-        st.dataframe(a_df_sorted,use_container_width=True,hide_index=True,height=360)
-        cal,_=st.columns([1,3])
-        with cal:
-            st.download_button(label="⬇️ Audit Log डाउनलोड (.xlsx)",
-                data=df_to_excel_bytes(a_df_sorted,"Audit_Log"),
-                file_name=f"Audit_Log_{today_str_ist}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True)
-        st.caption(f"कुल रिकॉर्ड: {len(a_df)}")
+        audit_data = audit_df.copy()
+        filter_date_col, filter_action_col = st.columns([1, 1])
+        with filter_date_col:
+            date_filter = st.text_input(
+                "तारीख फ़िल्टर (DD-MM-YYYY)",
+                placeholder="उदाहरण: 20-10-2026",
+                key="audit_date_filter",
+            )
+        with filter_action_col:
+            action_filter = st.selectbox(
+                "कार्रवाई",
+                ["सभी", "Assigned", "Removed"],
+                format_func=lambda value: {"सभी": "सभी कार्रवाइयाँ", "Assigned": "ड्यूटी लगाई", "Removed": "ड्यूटी हटाई"}[value],
+                key="audit_action_filter",
+            )
+        if date_filter.strip() and "Date" in audit_data.columns:
+            audit_data = audit_data[
+                audit_data["Date"].astype(str).str.contains(date_filter.strip(), na=False, regex=False)
+            ]
+        if action_filter != "सभी" and "Action" in audit_data.columns:
+            audit_data = audit_data[audit_data["Action"].astype(str) == action_filter]
+        if "Date" in audit_data.columns:
+            audit_data = audit_data.sort_values("Date", ascending=False, kind="stable")
+        st.markdown(
+            f'<div class="directory-count"><span>फ़िल्टर से मिले लॉग</span><strong>{len(audit_data)}</strong>'
+            f'<span class="directory-count-muted">कुल लॉग: {len(audit_df)}</span></div>',
+            unsafe_allow_html=True,
+        )
+        st.dataframe(
+            audit_data,
+            use_container_width=True,
+            hide_index=True,
+            height=min(480, max(140, 38 * (len(audit_data) + 1))),
+        )
+        st.download_button(
+            label="⬇️ फ़िल्टर किया हुआ Audit Log डाउनलोड करें",
+            data=df_to_excel_bytes(audit_data, "Audit_Log"),
+            file_name=f"Audit_Log_{today_str_ist}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            use_container_width=True,
+            key="download_filtered_audit",
+        )
 
 with tab5:
     st.markdown('<div class="section-title">➕ नया कर्मचारी जोड़ें</div>', unsafe_allow_html=True)
@@ -1211,7 +1256,7 @@ with tab5:
         e_status=st.selectbox("स्थिति",[1,0],format_func=lambda x:"सक्रिय" if x==1 else "निष्क्रिय")
         if pref_col:
             e_shift_pref=st.selectbox("शिफ्ट वरीयता",["","Shift1","Shift2","Shift3"],key="e_shift_pref")
-    if st.button("💾 कर्मचारी सहेजें"):
+    if st.button("💾 कर्मचारी सहेजें", use_container_width=True):
         new_mobile = e_mob.strip()
         if not new_mobile or not e_name.strip():
             st.warning("मोबाइल नं. और नाम ज़रूरी है।")
