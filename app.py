@@ -284,6 +284,89 @@ hr{border-color:var(--glass-border)!important; margin:20px 0!important;}
 /* Live dot */
 @keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(1.5)}}
 .live-dot{display:inline-block;width:8px;height:8px;background:#22c55e;border-radius:50%;animation:pulse-dot 1.5s ease-in-out infinite;box-shadow:0 0 6px #22c55e;margin-right:6px;vertical-align:middle;}
+
+/* ══ RESPONSIVE UI: phones and tablets ══ */
+@media (max-width: 900px) {
+  .main .block-container {
+    padding: 1rem 1rem 2rem 1rem !important;
+    max-width: 100% !important;
+  }
+  .magic-header-wrap { margin-bottom: 20px; }
+  .magic-header-inner { padding: 22px 18px 20px; }
+  .magic-header-inner h1 { font-size: clamp(1.35rem, 5vw, 2rem); letter-spacing: .5px; }
+  .magic-header-inner .subtitle { font-size: .75rem; letter-spacing: 1px; }
+  .metric-card { padding: 15px 8px; border-radius: 12px; }
+  .metric-card .val { font-size: clamp(1.6rem, 5vw, 2.4rem); }
+  .metric-card .lbl { font-size: .72rem; letter-spacing: 0; }
+  .metric-card .icon { font-size: 1.1rem; }
+  .shift-card { padding: 14px 8px 10px; }
+  .shift-card .count { font-size: 2.15rem; }
+  .section-title { font-size: .95rem; padding: 10px 12px; margin: 18px 0 10px; }
+  .stTabs [data-baseweb="tab-list"] {
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    scrollbar-width: thin;
+    max-width: 100%;
+  }
+  .stTabs [data-baseweb="tab"] {
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+    padding: 9px 12px !important;
+    font-size: .78rem !important;
+  }
+  [data-testid="stDataFrame"], [data-testid="stTable"] {
+    max-width: 100% !important;
+    overflow-x: auto !important;
+  }
+  .stButton > button, .stDownloadButton > button {
+    min-height: 42px;
+    white-space: normal !important;
+    line-height: 1.25 !important;
+    padding: 9px 12px !important;
+  }
+  .clock-time { font-size: 1.55rem; letter-spacing: 1px; }
+  .login-wrap { margin-top: 24px; padding: 30px 20px 16px; }
+}
+
+/* Small phones: allow Streamlit columns to wrap instead of squeezing content. */
+@media (max-width: 640px) {
+  .main .block-container {
+    padding: .7rem .65rem 1.5rem .65rem !important;
+  }
+  [data-testid="stHorizontalBlock"] {
+    flex-wrap: wrap !important;
+    gap: .65rem !important;
+  }
+  [data-testid="stHorizontalBlock"] > [data-testid="column"] {
+    min-width: min(100%, 145px) !important;
+    flex: 1 1 145px !important;
+  }
+  /* Keep paired search controls usable on phones. */
+  .metric-card { min-height: 112px; }
+  .metric-card .val { font-size: 1.8rem; }
+  .metric-card .lbl { font-size: .68rem; }
+  .shift-card .count { font-size: 1.9rem; }
+  .magic-header-inner { padding: 20px 12px 18px; }
+  .magic-header-inner h1 { line-height: 1.35; }
+  .header-badge { font-size: .65rem; letter-spacing: 1px; }
+  .section-title { font-size: .88rem; letter-spacing: .2px; }
+  .stTabs [data-baseweb="tab"] { padding: 8px 10px !important; }
+  .stTextInput input, .stSelectbox, .stDateInput { font-size: 16px !important; }
+  .footer { font-size: .68rem; line-height: 1.7; }
+  .login-title { font-size: 1.2rem; }
+  .login-sub { letter-spacing: 1px; }
+}
+
+/* Respect accessibility preferences and avoid motion on reduced-motion devices. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+}
+
 </style>
 """, unsafe_allow_html=True)
 
