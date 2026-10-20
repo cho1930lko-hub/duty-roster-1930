@@ -5,6 +5,7 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime, timezone, timedelta
 import json
 import io
+import html
 
 IST = timezone(timedelta(hours=5, minutes=30))
 
@@ -1352,9 +1353,14 @@ if search_btn or (search_mobile and len(search_mobile.strip()) == 10):
             </div>""", unsafe_allow_html=True)
         else:
             row        = result.iloc[0]
-            emp_name   = row.get("Employee_Name","—")
-            emp_desig  = row.get("Designation","—")
-            emp_shift  = str(row.get("Current_Shift","")).strip()
+            # Escape sheet-provided text before embedding it in custom HTML.
+            # This keeps employee names/designations/reasons from being interpreted as markup.
+            emp_name_raw = row.get("Employee_Name", "—")
+            emp_desig_raw = row.get("Designation", "—")
+            emp_name = html.escape(str(emp_name_raw if pd.notna(emp_name_raw) else "—"))
+            emp_desig = html.escape(str(emp_desig_raw if pd.notna(emp_desig_raw) else "—"))
+            emp_shift_raw = str(row.get("Current_Shift", "")).strip()
+            emp_shift = html.escape(emp_shift_raw)
             emp_days   = int(row.get("Days_On_Duty",0) or 0)
             emp_total  = int(row.get("Total_Duty_3M",0) or 0)
             emp_status = int(row.get("STATUS",0) or 0)
@@ -1377,7 +1383,10 @@ if search_btn or (search_mobile and len(search_mobile.strip()) == 10):
                     lr=lv.iloc[0]
                     leave_from_value=lr.get("Leave_From",lr.get("From_Date","—"))
                     leave_to_value=lr.get("Leave_To",lr.get("To_Date","—"))
-                    leave_reason=lr.get("Leave_Reason",lr.get("Reason",""))
+                    leave_reason_raw = lr.get("Leave_Reason", lr.get("Reason", ""))
+                    leave_reason = html.escape(str(leave_reason_raw)) if pd.notna(leave_reason_raw) else ""
+                    leave_from_value = html.escape(str(leave_from_value))
+                    leave_to_value = html.escape(str(leave_to_value))
                     reason_txt=f"&nbsp;|&nbsp; कारण: {leave_reason}" if leave_reason else ""
                     leave_html=f"""<div style="background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.25);
                         border-radius:10px;padding:10px 16px;margin-top:14px;font-size:0.83rem;color:#fb923c;">
