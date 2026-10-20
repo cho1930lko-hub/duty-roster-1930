@@ -541,6 +541,90 @@ hr{border-color:var(--glass-border)!important; margin:20px 0!important;}
   [data-testid="stDataFrame"] { font-size: .8rem !important; }
 }
 
+/* Mobile dashboard pass: compact cards, usable controls, and less wasted space. */
+@media (max-width: 640px) {
+  /* Two comfortable cards per row instead of five squeezed columns. */
+  [data-testid="stHorizontalBlock"] {
+    align-items: stretch !important;
+    column-gap: .55rem !important;
+    row-gap: .55rem !important;
+  }
+  [data-testid="stHorizontalBlock"] > [data-testid="column"] {
+    min-width: calc(50% - .35rem) !important;
+    flex: 1 1 calc(50% - .35rem) !important;
+    width: calc(50% - .35rem) !important;
+  }
+  /* Keep narrow paired controls from becoming too small. */
+  [data-testid="stHorizontalBlock"] > [data-testid="column"]:only-child {
+    min-width: 100% !important;
+    flex-basis: 100% !important;
+    width: 100% !important;
+  }
+  .metric-card {
+    min-height: 104px !important;
+    padding: 10px 9px !important;
+    border-radius: 12px !important;
+  }
+  .metric-card .val {
+    font-size: clamp(1.45rem, 6vw, 1.8rem) !important;
+    margin: 0 0 3px !important;
+  }
+  .metric-card .lbl { font-size: .74rem !important; line-height: 1.35 !important; }
+  .metric-hint { font-size: .62rem !important; }
+  .section-title { margin-top: 14px !important; margin-bottom: 8px !important; }
+  .dashboard-spacer { height: 4px !important; }
+  /* Full-width, thumb-friendly action buttons on phones. */
+  .stButton > button, .stDownloadButton > button,
+  [data-testid="stFormSubmitButton"] button {
+    min-height: 48px !important;
+    width: 100% !important;
+    padding: 10px 9px !important;
+    font-size: .84rem !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+  }
+  /* Tabs stay horizontally scrollable rather than squeezing labels. */
+  .stTabs [data-baseweb="tab-list"] {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    gap: 4px !important;
+  }
+  .stTabs [data-baseweb="tab"] {
+    flex: 0 0 auto !important;
+    min-height: 42px !important;
+    padding: 9px 11px !important;
+    font-size: .78rem !important;
+  }
+  /* Tables remain contained; avoid making the entire page wider than the phone. */
+  [data-testid="stDataFrame"], [data-testid="stTable"] {
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+  [data-testid="stDataFrame"] iframe {
+    max-width: 100% !important;
+  }
+  .stAlert { padding: 10px 12px !important; }
+  .stAlert p { font-size: .82rem !important; line-height: 1.45 !important; }
+  .magic-header-inner { padding: 16px 10px !important; }
+  .magic-header-inner h1 { overflow-wrap: anywhere; }
+  .header-kicker { letter-spacing: .8px !important; }
+  .clock-time { font-size: 1.35rem !important; }
+}
+@media (max-width: 380px) {
+  .main .block-container { padding-left: .45rem !important; padding-right: .45rem !important; }
+  [data-testid="stHorizontalBlock"] { gap: .4rem !important; }
+  [data-testid="stHorizontalBlock"] > [data-testid="column"] {
+    min-width: calc(50% - .25rem) !important;
+    flex-basis: calc(50% - .25rem) !important;
+    width: calc(50% - .25rem) !important;
+  }
+  .metric-card .lbl { font-size: .69rem !important; }
+  .stButton > button, .stDownloadButton > button { font-size: .78rem !important; }
+}
+
 /* Respect accessibility preferences and avoid motion on reduced-motion devices. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
