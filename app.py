@@ -411,6 +411,7 @@ def run_assignment(sheet_id):
         return False, f"❌ Main_Duty में डुप्लिकेट मोबाइल नंबर मिले ({sample}{extra})। ड्यूटी लगाने से पहले रिकॉर्ड ठीक करें।"
 
     # Keep the original row order so only intended cells are updated later.
+    sheet_headers = list(df.columns)
     sheet_row_by_mobile = {mobile: row_number for row_number, mobile in enumerate(df[mob_col].tolist(), start=2)}
     original_records = {
         row[mob_col]: row.to_dict()
@@ -516,7 +517,7 @@ def run_assignment(sheet_id):
     # Write only duty-related cells, not the whole worksheet. This preserves
     # unrelated columns/formulas and avoids rewriting employee master data.
     duty_columns = [shift_col, date_col, days_col, duty_count_col, s1_cnt, s2_cnt, s3_cnt]
-    header_positions = {str(header): position for position, header in enumerate(df.columns, start=1)}
+    header_positions = {str(header): position for position, header in enumerate(sheet_headers, start=1)}
 
     def column_letter(column_number):
         result = ""
