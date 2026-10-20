@@ -1152,13 +1152,8 @@ with tab3:
                     normalized_mobile = normalized_mobile[2:]
                 if len(normalized_mobile) != 10:
                     raise ValueError("मोबाइल नंबर 10 अंकों का होना चाहिए।")
-                existing_numbers = {
-                    "".join(ch for ch in str(value) if ch.isdigit())[-10:]
-                    for value in leave_ws.col_values(leave_headers.index("Mobile_No") + 1)[1:]
-                    if "".join(ch for ch in str(value) if ch.isdigit())
-                }
-                if normalized_mobile in existing_numbers:
-                    raise ValueError("इस मोबाइल नंबर का अवकाश रिकॉर्ड पहले से मौजूद है।")
+                # एक कर्मचारी के अलग-अलग समय पर कई अवकाश रिकॉर्ड हो सकते हैं,
+                # इसलिए मोबाइल नंबर के आधार पर पुराने अवकाश रिकॉर्ड को ब्लॉक न करें।
                 leave_values = {
                     "Mobile_No": normalized_mobile,
                     from_col: l_start.strftime("%d-%m-%Y"),
