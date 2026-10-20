@@ -837,6 +837,135 @@ def df_to_excel_bytes(df, sheet_name="Sheet1"):
         df.to_excel(writer, index=False, sheet_name=sheet_name)
     return output.getvalue()
 
+# ── Theme switcher ────────────────────────────────────────────────────────────
+if "app_theme" not in st.session_state:
+    st.session_state["app_theme"] = "🌙 डार्क"
+
+theme_left, theme_control, theme_right = st.columns([3, 2, 3])
+with theme_control:
+    st.selectbox(
+        "🎨 ऐप की थीम",
+        options=["🌙 डार्क", "☀️ लाइट"],
+        key="app_theme",
+        help="ऐप के रंग बदलने के लिए डार्क या लाइट थीम चुनें।",
+    )
+
+if st.session_state["app_theme"] == "☀️ लाइट":
+    st.markdown("""
+    <style>
+    :root {
+      --navy-deep: #f4f7fb;
+      --navy-mid: #e7edf5;
+      --navy-light: #dce6f1;
+      --navy-glow: #b9cce2;
+      --glass-bg: rgba(20, 45, 75, .045);
+      --glass-border: rgba(35, 58, 86, .16);
+      --text-primary: #172b46;
+      --text-muted: #536780;
+    }
+    html, body, [class*="css"], .stApp, [data-testid="stAppViewContainer"] {
+      background: #f4f7fb !important;
+      color: #172b46 !important;
+    }
+    .stApp { background: linear-gradient(135deg,#f8fafc 0%,#eaf1f8 55%,#f8fafc 100%) !important; }
+    .main .block-container { color: #172b46 !important; }
+    p, label, li, .stMarkdown, [data-testid="stCaptionContainer"] {
+      color: #273c56;
+    }
+    .magic-header-inner {
+      background: radial-gradient(ellipse at 50% 0%,rgba(46,117,182,.13),transparent 58%),
+                  linear-gradient(135deg,#ffffff 0%,#eaf2fc 55%,#ffffff 100%) !important;
+      box-shadow: 0 8px 28px rgba(40,70,110,.10);
+    }
+    .magic-header-inner h1 {
+      background: linear-gradient(90deg,#17365d 0%,#2e75b6 45%,#a36b00 75%,#17365d 100%) !important;
+      -webkit-background-clip: text !important;
+      background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+    }
+    .magic-header-inner .subtitle, .header-kicker, .dashboard-intro,
+    .directory-intro, .shift-card-caption, .audit-filter-note, .employee-form-note {
+      color: #526982 !important;
+    }
+    .header-badge { color:#166534 !important; background:rgba(34,197,94,.10) !important; }
+    .metric-card, .shift-card, .section-title, [data-testid="stMetric"] {
+      background: rgba(255,255,255,.88) !important;
+      border-color: #d4deea !important;
+      box-shadow: 0 4px 18px rgba(30,55,85,.07) !important;
+    }
+    .metric-card .lbl, .metric-hint, .section-title, .shift-card .unit {
+      color: #334a65 !important;
+    }
+    .directory-count {
+      color:#263d58 !important;
+      background:linear-gradient(110deg,rgba(0,140,180,.07),rgba(255,255,255,.95)) !important;
+      border-color:#d3e1ed !important;
+    }
+    .directory-count strong { color:#087e9b !important; }
+    .stTextInput>div>div>input, div[data-testid="stTextInput"] input,
+    input[type="password"], .stSelectbox>div>div,
+    .stDateInput>div>div>input, .stNumberInput input,
+    .stTextArea textarea, [data-testid="stMultiSelect"] {
+      background:#ffffff !important;
+      background-color:#ffffff !important;
+      color:#172b46 !important;
+      border-color:#bdcbdc !important;
+      caret-color:#1769aa !important;
+    }
+    .stTextInput label, .stTextInput label p, div[data-testid="stTextInput"] label,
+    div[data-testid="stTextInput"] label p, .stSelectbox label, .stDateInput label,
+    .stNumberInput label, .stTextArea label {
+      color:#334a65 !important;
+    }
+    .stTextInput input::placeholder, input[type="password"]::placeholder {
+      color:#71839a !important;
+    }
+    [data-baseweb="select"] *, [data-baseweb="popover"] * {
+      color:#172b46 !important;
+    }
+    [data-baseweb="menu"], [data-baseweb="popover"] [role="listbox"] {
+      background:#ffffff !important;
+    }
+    .stTabs [data-baseweb="tab-list"] {
+      background:#e7edf5 !important;
+      border-color:#d2dce8 !important;
+    }
+    .stTabs [data-baseweb="tab"] { color:#405771 !important; }
+    .stTabs [aria-selected="true"] {
+      background:linear-gradient(135deg,#2e75b6,#174b7c) !important;
+      color:#ffffff !important;
+    }
+    [data-testid="stDataFrame"], [data-testid="stTable"] {
+      border-color:#d2dce8 !important;
+    }
+    [data-testid="stSidebar"] {
+      background:linear-gradient(160deg,#ffffff,#eaf1f8) !important;
+      border-right:1px solid #d4deea !important;
+    }
+    [data-testid="stSidebar"] * { color:#172b46 !important; }
+    .clock-box {
+      background:linear-gradient(135deg,#ffffff,#e5eef8) !important;
+      border-color:#cbd9e8 !important;
+      box-shadow:0 4px 20px rgba(35,70,110,.08) !important;
+    }
+    .clock-label, .clock-city { color:#536780 !important; }
+    .clock-date { color:#8a5b00 !important; }
+    .clock-time { color:#087e9b !important; text-shadow:none !important; }
+    .footer { color:#536780 !important; border-color:#d4deea !important; }
+    .stAlert p { color:inherit !important; }
+    [data-testid="stInfoMessage"] { background:#e8f3ff !important; }
+    [data-testid="stSuccessMessage"] { background:#e8f8ee !important; }
+    [data-testid="stWarningMessage"] { background:#fff4e5 !important; }
+    .login-wrap {
+      background:linear-gradient(135deg,#ffffff,#eaf2fc) !important;
+      border-color:#c9d9eb !important;
+      box-shadow:0 8px 30px rgba(40,70,110,.10) !important;
+    }
+    .login-title { color:#17365d !important; }
+    .login-sub { color:#536780 !important; }
+    </style>
+    """, unsafe_allow_html=True)
+
 # ── Header ────────────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="magic-header-wrap">
