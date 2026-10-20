@@ -1033,6 +1033,27 @@ if st.session_state["app_theme"] == "☀️ लाइट":
       background-clip: text !important;
       -webkit-text-fill-color: transparent !important;
     }
+    /* Keep all hero text readable on the light header background. */
+    .magic-header-inner .owner-title {
+      background: linear-gradient(90deg,#17365d 0%,#2e75b6 48%,#6d4aa1 100%) !important;
+      -webkit-background-clip: text !important;
+      background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      color: #17365d !important;
+    }
+    .magic-header-inner .system-title {
+      color: #17365d !important;
+      -webkit-text-fill-color: #17365d !important;
+      text-shadow: none !important;
+    }
+    .magic-header-inner .helpline-title {
+      color: #8a5b00 !important;
+      -webkit-text-fill-color: #8a5b00 !important;
+      text-shadow: none !important;
+    }
+    .magic-header-inner .hero-divider {
+      box-shadow: 0 2px 8px rgba(46,117,182,.14);
+    }
     .magic-header-inner .subtitle, .header-kicker, .dashboard-intro,
     .directory-intro, .shift-card-caption, .audit-filter-note, .employee-form-note {
       color: #526982 !important;
