@@ -80,15 +80,14 @@ html, body, [class*="css"] {
 }
 .magic-header-wrap::before {
     content: ''; position: absolute; inset: -2px; border-radius: 22px;
-    background: conic-gradient(from var(--angle,0deg),#ff0080,#ff6b00,#ffd700,#00ff88,#00cfff,#7f5fff,#ff0080);
-    animation: spin-border 5s linear infinite; z-index: 0;
+    background: linear-gradient(135deg,#ff6b00 0%,#ffd700 25%,#00ff88 50%,#00cfff 75%,#7f5fff 100%);
+    z-index: 0;
 }
 .magic-header-wrap::after {
     content: ''; position: absolute; inset: -20px; border-radius: 32px;
-    background: conic-gradient(from 0deg,#ff008055,#00cfff55,#7f5fff55,#ff008055);
-    animation: spin-border 5s linear infinite; filter: blur(24px); z-index: -1; opacity: 0.7;
+    background: linear-gradient(135deg,#ff008055,#00cfff55,#7f5fff55);
+    filter: blur(24px); z-index: -1; opacity: 0.45;
 }
-@keyframes spin-border { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
 .magic-header-inner {
     position: relative; z-index: 1;
     background: linear-gradient(135deg, #0d1b3e 0%, #132448 30%, #1a2d5a 60%, #0d1b3e 100%);
