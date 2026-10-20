@@ -437,7 +437,7 @@ def run_assignment(sheet_id):
     df_export = df.reset_index()
     final_data = [df_export.columns.values.tolist()] + df_export.fillna("").values.tolist()
     main_ws.update(final_data)
-    main_ws.update("L1", [[today_str]])
+    main_ws.update(values=[[today_str]], range_name="L1")
     if logs: audit_ws.append_rows(logs)
     load_sheet_data.clear()
     return True, f"✅ {today_str} की ड्यूटी सफलतापूर्वक लग गई! कुल {len(logs)} बदलाव हुए।"
