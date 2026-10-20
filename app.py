@@ -734,8 +734,11 @@ with tab5:
         if pref_col:
             e_shift_pref=st.selectbox("शिफ्ट वरीयता",["","Shift1","Shift2","Shift3"],key="e_shift_pref")
     if st.button("💾 कर्मचारी सहेजें"):
-        if not e_mob.strip() or not e_name.strip():
+        new_mobile = e_mob.strip()
+        if not new_mobile or not e_name.strip():
             st.warning("मोबाइल नं. और नाम ज़रूरी है।")
+        elif not (new_mobile.isascii() and new_mobile.isdigit() and len(new_mobile) == 10):
+            st.warning("⚠️ मोबाइल नंबर 10 अंकों का होना चाहिए।")
         else:
             try:
                 client=get_client(); sh=client.open_by_key(SHEET_ID)
@@ -746,26 +749,42 @@ with tab5:
                 missing=[h for h in required_headers if h not in employee_headers]
                 if missing:
                     raise ValueError("Main_Duty शीट में आवश्यक कॉलम नहीं मिले: " + ", ".join(missing))
-                employee_values={
-                    "Mobile_No":e_mob.strip(),
-                    "Employee_Name":e_name.strip(),
-                    "Designation":e_desig.strip(),
-                    "Current_Shift":"",
-                    "Shift_Start_Date":"",
-                    "Days_On_Duty":0,
-                    "STATUS":int(e_status),
-                    "Total_Duty_3M":0,
-                    "Shift1count":0,
-                    "Shift2count":0,
-                    "Shift3count":0,
-                }
-                if rank_col:
-                    employee_values[rank_col]=e_rank.strip()
-                if pref_col:
-                    employee_values[pref_col]=e_shift_pref
-                main_ws.append_row([employee_values.get(h,"") for h in employee_headers],
-                                  value_input_option="USER_ENTERED")
-                st.success(f"✅ {e_name.strip()} जोड़ा गया!"); load_sheet_data.clear(); st.rerun()
+
+                # Avoid duplicate employee records for the same mobile number.
+                existing_rows = main_ws.get_all_records()
+                def normalized_mobile(value):
+                    digits = "".join(ch for ch in str(value).strip() if ch.isdigit())
+                    if len(digits) == 12 and digits.startswith("91"):
+                        digits = digits[2:]
+                    return digits if len(digits) == 10 else ""
+
+                duplicate = any(
+                    normalized_mobile(row.get("Mobile_No", "")) == new_mobile
+                    for row in existing_rows
+                )
+                if duplicate:
+                    st.warning("⚠️ इस मोबाइल नंबर से कर्मचारी पहले से दर्ज है। दोबारा जोड़ने के बजाय कर्मचारी सूची में उसे खोजें।")
+                else:
+                    employee_values={
+                        "Mobile_No":new_mobile,
+                        "Employee_Name":e_name.strip(),
+                        "Designation":e_desig.strip(),
+                        "Current_Shift":"",
+                        "Shift_Start_Date":"",
+                        "Days_On_Duty":0,
+                        "STATUS":int(e_status),
+                        "Total_Duty_3M":0,
+                        "Shift1count":0,
+                        "Shift2count":0,
+                        "Shift3count":0,
+                    }
+                    if rank_col:
+                        employee_values[rank_col]=e_rank.strip()
+                    if pref_col:
+                        employee_values[pref_col]=e_shift_pref
+                    main_ws.append_row([employee_values.get(h,"") for h in employee_headers],
+                                      value_input_option="USER_ENTERED")
+                    st.success(f"✅ {e_name.strip()} जोड़ा गया!"); load_sheet_data.clear(); st.rerun()
             except Exception as e: st.error(f"Error: {e}")
     st.markdown("---")
     st.markdown('<div class="section-title">🔄 Cache रिफ्रेश करें</div>', unsafe_allow_html=True)
