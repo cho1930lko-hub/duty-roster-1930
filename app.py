@@ -852,6 +852,18 @@ with theme_control:
 if st.session_state["app_theme"] == "☀️ लाइट":
     st.markdown("""
     <style>
+    /* Force the selected light theme to override the app's original dark CSS. */
+    :root, .stApp, [data-testid="stAppViewContainer"] {
+      color-scheme: light !important;
+      --navy-deep: #f4f7fb !important;
+      --navy-mid: #e7edf5 !important;
+      --navy-light: #dce6f1 !important;
+      --navy-glow: #b9cce2 !important;
+      --glass-bg: rgba(255,255,255,.88) !important;
+      --glass-border: rgba(35,58,86,.16) !important;
+      --text-primary: #172b46 !important;
+      --text-muted: #536780 !important;
+    }
     :root {
       --navy-deep: #f4f7fb;
       --navy-mid: #e7edf5;
@@ -951,6 +963,26 @@ if st.session_state["app_theme"] == "☀️ लाइट":
     .clock-date { color:#8a5b00 !important; }
     .clock-time { color:#087e9b !important; text-shadow:none !important; }
     .footer { color:#536780 !important; border-color:#d4deea !important; }
+    /* Cover selectors that were hard-coded to dark colors in the base stylesheet. */
+    .stTextInput>div>div, .stSelectbox>div>div, .stDateInput>div>div,
+    .stNumberInput>div>div, .stTextArea>div>div,
+    .stTextInput>div>div>input, .stSelectbox>div>div>div,
+    .stDateInput>div>div>input, .stNumberInput input, .stTextArea textarea,
+    input[type="text"], input[type="password"], input[type="number"], textarea {
+      background:#ffffff !important;
+      background-color:#ffffff !important;
+      color:#172b46 !important;
+      border-color:#bdcbdc !important;
+      caret-color:#1769aa !important;
+    }
+    .stButton>button, .stDownloadButton>button {
+      color:#ffffff !important;
+    }
+    .stMarkdown, .stMarkdown p, [data-testid="stVerticalBlock"] label,
+    [data-testid="stWidgetLabel"] p, [data-testid="stCaptionContainer"] {
+      color:#273c56;
+    }
+    [data-testid="stAlert"] { color:#172b46 !important; }
     .stAlert p { color:inherit !important; }
     [data-testid="stInfoMessage"] { background:#e8f3ff !important; }
     [data-testid="stSuccessMessage"] { background:#e8f8ee !important; }
