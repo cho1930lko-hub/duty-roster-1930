@@ -402,6 +402,20 @@ def run_assignment(sheet_id):
         return False, "❌ Main_Duty में कोई कर्मचारी रिकॉर्ड नहीं है।"
 
     df[mob_col] = df[mob_col].astype(str).str.strip()
+    if (df[mob_col] == "").any():
+        return False, "❌ Main_Duty में कुछ कर्मचारियों का मोबाइल नंबर खाली है। पहले उसे ठीक करें।"
+    duplicate_mobiles = df.loc[df[mob_col].duplicated(keep=False), mob_col].unique().tolist()
+    if duplicate_mobiles:
+        sample = ", ".join(duplicate_mobiles[:5])
+        extra = " आदि" if len(duplicate_mobiles) > 5 else ""
+        return False, f"❌ Main_Duty में डुप्लिकेट मोबाइल नंबर मिले ({sample}{extra})। ड्यूटी लगाने से पहले रिकॉर्ड ठीक करें।"
+
+    # Keep the original row order so only intended cells are updated later.
+    sheet_row_by_mobile = {mobile: row_number for row_number, mobile in enumerate(df[mob_col].tolist(), start=2)}
+    original_records = {
+        row[mob_col]: row.to_dict()
+        for _, row in df.iterrows()
+    }
     df.set_index(mob_col, inplace=True)
     for c in [status_col, duty_count_col, s1_cnt, s2_cnt, s3_cnt, days_col]:
         df[c] = pd.to_numeric(df[c], errors="coerce").fillna(0).astype(int)
@@ -499,10 +513,40 @@ def run_assignment(sheet_id):
             if remaining > 0:
                 staffing_shortfalls.append(f"{s_name}: {remaining}")
 
-    df_export = df.reset_index()
-    final_data = [df_export.columns.values.tolist()] + df_export.fillna("").values.tolist()
-    main_ws.update(final_data)
-    main_ws.update(values=[[today_str]], range_name="L1")
+    # Write only duty-related cells, not the whole worksheet. This preserves
+    # unrelated columns/formulas and avoids rewriting employee master data.
+    duty_columns = [shift_col, date_col, days_col, duty_count_col, s1_cnt, s2_cnt, s3_cnt]
+    header_positions = {str(header): position for position, header in enumerate(df.columns, start=1)}
+
+    def column_letter(column_number):
+        result = ""
+        while column_number:
+            column_number, remainder = divmod(column_number - 1, 26)
+            result = chr(65 + remainder) + result
+        return result
+
+    cell_updates = []
+    for mobile, row in df.iterrows():
+        sheet_row = sheet_row_by_mobile[mobile]
+        original = original_records[mobile]
+        for column in duty_columns:
+            new_value = row[column]
+            if pd.isna(new_value):
+                new_value = ""
+            old_value = original.get(column, "")
+            old_text = "" if pd.isna(old_value) else str(old_value).strip()
+            new_text = "" if new_value == "" else str(new_value).strip()
+            if old_text != new_text:
+                col_letter = column_letter(header_positions[column])
+                cell_updates.append({
+                    "range": f"{col_letter}{sheet_row}",
+                    "values": [[new_value]],
+                })
+
+    # Update duty cells and the once-per-day marker in one Sheets batch request,
+    # so a successful duty write cannot be followed by a separate marker failure.
+    cell_updates.append({"range": "L1", "values": [[today_str]]})
+    main_ws.batch_update(cell_updates, value_input_option="USER_ENTERED")
     if logs: audit_ws.append_rows(logs)
     load_sheet_data.clear()
     messages = []
