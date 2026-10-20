@@ -534,6 +534,8 @@ def run_assignment(sheet_id):
             new_value = row[column]
             if pd.isna(new_value):
                 new_value = ""
+            elif hasattr(new_value, "item"):
+                new_value = new_value.item()
             old_value = original.get(column, "")
             old_text = "" if pd.isna(old_value) else str(old_value).strip()
             new_text = "" if new_value == "" else str(new_value).strip()
