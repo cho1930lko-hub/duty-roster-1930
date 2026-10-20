@@ -1047,6 +1047,68 @@ if st.session_state["app_theme"] == "☀️ लाइट":
     .clock-date { color:#8a5b00 !important; }
     .clock-time { color:#087e9b !important; text-shadow:none !important; }
     .footer { color:#536780 !important; border-color:#d4deea !important; }
+    /* Consistent light theme for cards, native widgets, data grids and tab content. */
+    .metric-card, .shift-card, .shift-report-card, .section-title,
+    .directory-count, [data-testid="stMetric"],
+    [data-testid="stExpander"], [data-testid="stForm"],
+    [data-testid="stDataFrame"], [data-testid="stTable"] {
+      color: #172b46 !important;
+      border-color: #d4deea !important;
+    }
+    .metric-card {
+      background: linear-gradient(155deg,#ffffff,#f2f6fb) !important;
+    }
+    .metric-card .val { color: #1769aa !important; }
+    .card-blue .val { color: #1769aa !important; }
+    .card-green .val { color: #16834a !important; }
+    .card-orange .val { color: #b85d0a !important; }
+    .card-purple .val { color: #7541a8 !important; }
+    .card-red .val { color: #c52b2b !important; }
+    .shift-card { background: #ffffff !important; }
+    .shift-card .count { color: #1769aa !important; }
+    .shift-card .unit, .metric-card .lbl, .metric-hint { color: #334a65 !important; }
+    .stTabs [data-baseweb="tab-panel"] { color: #172b46 !important; }
+    .stTabs [data-baseweb="tab-list"] { background: #e7edf5 !important; }
+    .stTabs [data-baseweb="tab"] { color: #334a65 !important; }
+    [data-testid="stDataFrame"] {
+      background: #ffffff !important;
+      border: 1px solid #d4deea !important;
+      border-radius: 10px !important;
+    }
+    [data-testid="stDataFrame"] iframe { background: #ffffff !important; }
+    [data-testid="stTable"] table, [data-testid="stTable"] th,
+    [data-testid="stTable"] td {
+      background: #ffffff !important;
+      color: #172b46 !important;
+      border-color: #e1e8f0 !important;
+    }
+    [data-testid="stExpander"] {
+      background: #ffffff !important;
+      border: 1px solid #d4deea !important;
+      border-radius: 10px !important;
+    }
+    [data-testid="stExpander"] summary, [data-testid="stExpander"] summary p {
+      color: #172b46 !important;
+    }
+    .stCheckbox label, .stRadio label, .stSlider label,
+    .stMultiSelect label, .stSelectbox label,
+    .stDateInput label, .stNumberInput label,
+    .stTextInput label, .stTextArea label {
+      color: #334a65 !important;
+    }
+    .stSelectbox [data-baseweb="select"] > div,
+    .stMultiSelect [data-baseweb="select"] > div {
+      background: #ffffff !important;
+      border-color: #bdcbdc !important;
+      color: #172b46 !important;
+    }
+    .stButton > button:not(:disabled) {
+      border-color: #bdcbdc !important;
+    }
+    [data-testid="stSidebar"] {
+      color-scheme: light !important;
+    }
+    ::placeholder { color: #71839a !important; opacity: 1 !important; }
     /* Cover selectors that were hard-coded to dark colors in the base stylesheet. */
     .stTextInput>div>div, .stSelectbox>div>div, .stDateInput>div>div,
     .stNumberInput>div>div, .stTextArea>div>div,
