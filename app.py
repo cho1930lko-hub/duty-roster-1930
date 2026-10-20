@@ -357,6 +357,76 @@ hr{border-color:var(--glass-border)!important; margin:20px 0!important;}
   .login-sub { letter-spacing: 1px; }
 }
 
+/* Part 2: refined header and dashboard summary cards */
+.header-kicker {
+  color: #8fa9d4; font-size: .68rem; font-weight: 700;
+  letter-spacing: 2.2px; margin-bottom: 8px; position: relative; z-index: 1;
+}
+.header-emblem {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 48px; height: 48px; margin: 0 auto 8px; border-radius: 15px;
+  background: rgba(0,212,255,.10); border: 1px solid rgba(0,212,255,.22);
+  font-size: 1.65rem; position: relative; z-index: 1;
+}
+.magic-header-wrap { margin-bottom: 22px; }
+.magic-header-inner {
+  padding: 24px 30px 22px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(46,117,182,.23), transparent 58%),
+              linear-gradient(135deg, #0b1730 0%, #12264b 52%, #0b1730 100%);
+}
+.magic-header-inner h1 {
+  font-family: 'Noto Sans Devanagari','Rajdhani',sans-serif;
+  font-size: clamp(1.45rem, 3.4vw, 2.15rem);
+  letter-spacing: .2px; line-height: 1.4; margin-bottom: 8px;
+}
+.magic-header-inner .subtitle {
+  letter-spacing: .4px; text-transform: none; font-size: .9rem;
+  color: #b7c9e8;
+}
+.header-badge {
+  letter-spacing: .5px; padding: 6px 14px;
+  background: rgba(34,197,94,.09); border-color: rgba(34,197,94,.25);
+  color: #86efac;
+}
+.dashboard-intro {
+  color: #91a7c9; font-size: .86rem; line-height: 1.6;
+  margin: -4px 0 14px 2px;
+}
+.metric-card {
+  min-height: 148px; padding: 17px 14px 14px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: linear-gradient(155deg, rgba(255,255,255,.055), rgba(255,255,255,.018));
+}
+.metric-top {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; margin-bottom: 5px;
+}
+.metric-card .icon { margin: 0; }
+.metric-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: currentColor; opacity: .75;
+}
+.metric-card .val { font-size: clamp(2rem, 3vw, 2.7rem); margin: 1px 0 5px; }
+.metric-card .lbl { color: #dce7fb; font-size: .83rem; }
+.metric-hint { color: #8197ba; font-size: .67rem; margin-top: 5px; text-align: center; }
+.dashboard-spacer { height: 10px; }
+@media (max-width: 640px) {
+  .magic-header-wrap { margin-bottom: 16px; }
+  .magic-header-inner { padding: 18px 12px 17px; }
+  .header-kicker { font-size: .57rem; letter-spacing: 1.2px; }
+  .header-emblem { width: 40px; height: 40px; border-radius: 12px; font-size: 1.35rem; }
+  .magic-header-inner h1 { font-size: clamp(1.15rem, 5.5vw, 1.55rem); }
+  .magic-header-inner .subtitle { font-size: .78rem; }
+  .header-badge { font-size: .66rem; margin-top: 8px; }
+  .dashboard-intro { font-size: .78rem; margin-bottom: 10px; }
+  .metric-card { min-height: 124px !important; padding: 11px 7px !important; }
+  .metric-card .val { font-size: clamp(1.55rem, 7vw, 1.9rem) !important; }
+  .metric-card .lbl { font-size: .72rem; line-height: 1.4; }
+  .metric-hint { font-size: .61rem; line-height: 1.35; }
+  .metric-top { margin-bottom: 3px; }
+  .metric-card .icon { font-size: 1rem; }
+}
+
 /* Part 1 UI polish: consistent spacing, readable controls, mobile-first dashboard */
 .stApp { overflow-x: hidden; }
 .main .block-container { width: 100%; }
@@ -697,14 +767,15 @@ def df_to_excel_bytes(df, sheet_name="Sheet1"):
 
 # ── Header ────────────────────────────────────────────────────────────────────
 st.markdown("""
-<div class="magic-header-wrap"><div class="magic-header-inner">
-  <div class="particle p1"></div><div class="particle p2"></div>
-  <div class="particle p3"></div><div class="particle p4"></div>
-  <div class="particle p5"></div><div class="particle p6"></div>
-  <h1>🚨 साइबर क्राइम हेल्पलाइन 1930</h1>
-  <div class="subtitle">✦ ड्यूटी रोस्टर प्रबंधन प्रणाली ✦</div>
-  <div class="header-badge"><span class="live-dot"></span>LIVE SYSTEM • ACTIVE</div>
-</div></div>
+<div class="magic-header-wrap">
+  <div class="magic-header-inner">
+    <div class="header-kicker">UTTAR PRADESH • DUTY MANAGEMENT</div>
+    <div class="header-emblem">🚨</div>
+    <h1>साइबर क्राइम हेल्पलाइन 1930</h1>
+    <div class="subtitle">ड्यूटी रोस्टर प्रबंधन प्रणाली</div>
+    <div class="header-badge"><span class="live-dot"></span>डैशबोर्ड तैयार</div>
+  </div>
+</div>
 """, unsafe_allow_html=True)
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
@@ -738,19 +809,27 @@ inactive   = main_df[main_df[status_col] == 0]
 unassigned = main_df[(main_df[shift_col].str.strip()=="") & (~main_df[mob_col].isin(leave_ids)) & (main_df[status_col]==1)]
 
 # ── Summary Cards ─────────────────────────────────────────────────────────────
-st.markdown('<div class="section-title">📊 सारांश डैशबोर्ड</div>', unsafe_allow_html=True)
-c1,c2,c3,c4,c5 = st.columns(5)
-for col,icon,val,lbl,cls in [
-    (c1,"👥",len(main_df),"कुल कर्मचारी","card-blue"),
-    (c2,"🟢",len(on_duty),"ड्यूटी पर","card-green"),
-    (c3,"🌴",len(on_leave),"अवकाश पर","card-orange"),
-    (c4,"⏳",len(unassigned),"प्रतीक्षारत","card-purple"),
-    (c5,"🔴",len(inactive),"निष्क्रिय","card-red"),
-]:
+st.markdown('<div class="section-title">📊 कर्मचारी स्थिति का सारांश</div>', unsafe_allow_html=True)
+st.markdown('<p class="dashboard-intro">आज की ड्यूटी, अवकाश और उपलब्ध स्टाफ की एक नज़र में स्थिति</p>', unsafe_allow_html=True)
+summary_cards = [
+    ("👥", len(main_df), "कुल कर्मचारी", "पंजीकृत स्टाफ", "card-blue"),
+    ("🟢", len(on_duty), "ड्यूटी पर", "वर्तमान आवंटन", "card-green"),
+    ("🌴", len(on_leave), "अवकाश पर", "आज सक्रिय अवकाश", "card-orange"),
+    ("⏳", len(unassigned), "प्रतीक्षारत", "आवंटन शेष", "card-purple"),
+    ("🔴", len(inactive), "निष्क्रिय", "ड्यूटी से बाहर", "card-red"),
+]
+summary_cols = st.columns(5)
+for col, (icon, val, label, hint, cls) in zip(summary_cols, summary_cards):
     with col:
-        st.markdown(f'<div class="metric-card {cls}"><span class="icon">{icon}</span><div class="val">{val}</div><div class="lbl">{lbl}</div></div>', unsafe_allow_html=True)
+        st.markdown(
+            f'<div class="metric-card {cls}">'
+            f'<div class="metric-top"><span class="icon">{icon}</span><span class="metric-dot"></span></div>'
+            f'<div class="val">{val}</div><div class="lbl">{label}</div>'
+            f'<div class="metric-hint">{hint}</div></div>',
+            unsafe_allow_html=True,
+        )
 
-st.markdown("<br>", unsafe_allow_html=True)
+st.markdown("<div class='dashboard-spacer'></div>", unsafe_allow_html=True)
 
 # ── Run Assignment ────────────────────────────────────────────────────────────
 st.markdown('<div class="section-title">⚡ ड्यूटी लगाएं</div>', unsafe_allow_html=True)
