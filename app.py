@@ -686,10 +686,13 @@ def get_client():
 def load_sheet_data(sheet_id):
     client = get_client()
     sh = client.open_by_key(sheet_id)
-    main_df   = pd.DataFrame(sh.worksheet("Main_Duty").get_all_records())
-    config_df = pd.DataFrame(sh.worksheet("Config").get_all_values()[1:],
-                              columns=sh.worksheet("Config").get_all_values()[0])
-    leave_df  = pd.DataFrame(sh.worksheet("Leave").get_all_records())
+    main_df = pd.DataFrame(sh.worksheet("Main_Duty").get_all_records())
+    config_values = sh.worksheet("Config").get_all_values()
+    if config_values:
+        config_df = pd.DataFrame(config_values[1:], columns=config_values[0])
+    else:
+        config_df = pd.DataFrame()
+    leave_df = pd.DataFrame(sh.worksheet("Leave").get_all_records())
     try:
         audit_df = pd.DataFrame(sh.worksheet("Audit_Log").get_all_records())
     except:
@@ -901,9 +904,21 @@ def run_assignment(sheet_id):
     # so a successful duty write cannot be followed by a separate marker failure.
     cell_updates.append({"range": "L1", "values": [[today_str]]})
     main_ws.batch_update(cell_updates, value_input_option="USER_ENTERED")
-    if logs: audit_ws.append_rows(logs)
     load_sheet_data.clear()
+    audit_warning = ""
+    if logs:
+        try:
+            audit_ws.append_rows(logs)
+        except Exception:
+            # Duty cells and L1 are already committed; do not report the whole run as failed.
+            # Explicitly tell the operator that the audit trail needs manual attention.
+            audit_warning = (
+                "⚠️ ड्यूटी शीट अपडेट हो गई है, लेकिन Audit Log में प्रविष्टि नहीं हो सकी। "
+                "ड्यूटी दोबारा न चलाएँ; Audit Log जाँचें।"
+            )
     messages = []
+    if audit_warning:
+        messages.append(audit_warning)
     if invalid_shift_configs:
         messages.append("⚠️ Config की अमान्य पंक्तियां: " + ", ".join(invalid_shift_configs))
     if staffing_shortfalls:
@@ -1474,6 +1489,18 @@ with tab3:
                     normalized_mobile = normalized_mobile[2:]
                 if len(normalized_mobile) != 10:
                     raise ValueError("मोबाइल नंबर 10 अंकों का होना चाहिए।")
+                main_ws = sh.worksheet("Main_Duty")
+                main_headers = main_ws.row_values(1)
+                if "Mobile_No" not in main_headers:
+                    raise ValueError("Main_Duty शीट में Mobile_No हेडर नहीं मिला।")
+                mobile_index = main_headers.index("Mobile_No")
+                employee_mobiles = {
+                    "".join(ch for ch in str(row[mobile_index]).strip() if ch.isdigit())[-10:]
+                    for row in main_ws.get_all_values()[1:]
+                    if len(row) > mobile_index and str(row[mobile_index]).strip()
+                }
+                if normalized_mobile not in employee_mobiles:
+                    raise ValueError("यह मोबाइल नंबर कर्मचारी सूची में नहीं मिला। पहले कर्मचारी सूची जाँचें।")
                 # एक कर्मचारी के अलग-अलग समय पर कई अवकाश रिकॉर्ड हो सकते हैं,
                 # इसलिए मोबाइल नंबर के आधार पर पुराने अवकाश रिकॉर्ड को ब्लॉक न करें।
                 leave_values = {
