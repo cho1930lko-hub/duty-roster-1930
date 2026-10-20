@@ -5,6 +5,7 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime, timezone, timedelta
 import json
 import io
+import html
 
 IST = timezone(timedelta(hours=5, minutes=30))
 
@@ -284,6 +285,273 @@ hr{border-color:var(--glass-border)!important; margin:20px 0!important;}
 /* Live dot */
 @keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(1.5)}}
 .live-dot{display:inline-block;width:8px;height:8px;background:#22c55e;border-radius:50%;animation:pulse-dot 1.5s ease-in-out infinite;box-shadow:0 0 6px #22c55e;margin-right:6px;vertical-align:middle;}
+
+/* ══ RESPONSIVE UI: phones and tablets ══ */
+@media (max-width: 900px) {
+  .main .block-container {
+    padding: 1rem 1rem 2rem 1rem !important;
+    max-width: 100% !important;
+  }
+  .magic-header-wrap { margin-bottom: 20px; }
+  .magic-header-inner { padding: 22px 18px 20px; }
+  .magic-header-inner h1 { font-size: clamp(1.35rem, 5vw, 2rem); letter-spacing: .5px; }
+  .magic-header-inner .subtitle { font-size: .75rem; letter-spacing: 1px; }
+  .metric-card { padding: 15px 8px; border-radius: 12px; }
+  .metric-card .val { font-size: clamp(1.6rem, 5vw, 2.4rem); }
+  .metric-card .lbl { font-size: .72rem; letter-spacing: 0; }
+  .metric-card .icon { font-size: 1.1rem; }
+  .shift-card { padding: 14px 8px 10px; }
+  .shift-card .count { font-size: 2.15rem; }
+  .section-title { font-size: .95rem; padding: 10px 12px; margin: 18px 0 10px; }
+  .stTabs [data-baseweb="tab-list"] {
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    scrollbar-width: thin;
+    max-width: 100%;
+  }
+  .stTabs [data-baseweb="tab"] {
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+    padding: 9px 12px !important;
+    font-size: .78rem !important;
+  }
+  [data-testid="stDataFrame"], [data-testid="stTable"] {
+    max-width: 100% !important;
+    overflow-x: auto !important;
+  }
+  .stButton > button, .stDownloadButton > button {
+    min-height: 42px;
+    white-space: normal !important;
+    line-height: 1.25 !important;
+    padding: 9px 12px !important;
+  }
+  .clock-time { font-size: 1.55rem; letter-spacing: 1px; }
+  .login-wrap { margin-top: 24px; padding: 30px 20px 16px; }
+}
+
+/* Small phones: allow Streamlit columns to wrap instead of squeezing content. */
+@media (max-width: 640px) {
+  .main .block-container {
+    padding: .7rem .65rem 1.5rem .65rem !important;
+  }
+  [data-testid="stHorizontalBlock"] {
+    flex-wrap: wrap !important;
+    gap: .65rem !important;
+  }
+  [data-testid="stHorizontalBlock"] > [data-testid="column"] {
+    min-width: min(100%, 145px) !important;
+    flex: 1 1 145px !important;
+  }
+  /* Keep paired search controls usable on phones. */
+  .metric-card { min-height: 112px; }
+  .metric-card .val { font-size: 1.8rem; }
+  .metric-card .lbl { font-size: .68rem; }
+  .shift-card .count { font-size: 1.9rem; }
+  .magic-header-inner { padding: 20px 12px 18px; }
+  .magic-header-inner h1 { line-height: 1.35; }
+  .header-badge { font-size: .65rem; letter-spacing: 1px; }
+  .section-title { font-size: .88rem; letter-spacing: .2px; }
+  .stTabs [data-baseweb="tab"] { padding: 8px 10px !important; }
+  .stTextInput input, .stSelectbox, .stDateInput { font-size: 16px !important; }
+  .footer { font-size: .68rem; line-height: 1.7; }
+  .login-title { font-size: 1.2rem; }
+  .login-sub { letter-spacing: 1px; }
+}
+
+/* Part 5: audit log, employee forms, and final responsive polish */
+.audit-filter-note {
+  color: #91a7c9; font-size: .78rem; line-height: 1.5;
+}
+.employee-form-note {
+  color: #91a7c9; font-size: .78rem; line-height: 1.55;
+  margin: 2px 0 12px;
+}
+@media (max-width: 640px) {
+  .stForm [data-testid="stFormSubmitButton"] button,
+  .stFormSubmitButton button { width: 100% !important; min-height: 46px !important; }
+  [data-testid="stTextInputRootElement"] input { font-size: 16px !important; }
+  .directory-count { overflow-wrap: anywhere; }
+}
+
+/* Part 4: employee directory and leave management */
+.directory-intro {
+  color: #91a7c9; font-size: .84rem; line-height: 1.65;
+  margin: 0 0 12px 2px;
+}
+.directory-count {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin: 10px 0; padding: 11px 14px; border-radius: 12px;
+  border: 1px solid rgba(0,212,255,.16);
+  background: linear-gradient(110deg, rgba(0,212,255,.07), rgba(255,255,255,.025));
+  color: #c8d8f0; font-size: .8rem;
+}
+.directory-count strong { color: #67e8f9; font-size: 1.25rem; }
+.directory-count-muted { color: #91a7c9; margin-left: auto; }
+@media (max-width: 640px) {
+  .directory-intro { font-size: .77rem; }
+  .directory-count { gap: 7px; padding: 10px 11px; font-size: .75rem; }
+  .directory-count strong { font-size: 1.1rem; }
+  .directory-count-muted { width: 100%; margin-left: 0; }
+}
+
+/* Part 3: readable shift reports and download controls */
+.report-intro {
+  color: #91a7c9; font-size: .86rem; line-height: 1.65;
+  margin: 0 0 14px 2px;
+}
+.shift-report-card {
+  display: flex; flex-direction: column; align-items: stretch;
+  padding: 14px 18px 12px; margin: 12px 0 8px;
+  min-height: 0; text-align: left;
+}
+.shift-card-heading {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; flex-wrap: wrap; margin-bottom: 8px;
+}
+.shift-card-caption { color: #9bb0d0; font-size: .78rem; font-weight: 600; }
+.shift-report-card .count { font-size: 2.2rem; }
+.shift-report-card .unit { margin-top: 2px; }
+.stDownloadButton > button {
+  min-height: 48px !important;
+  white-space: normal !important;
+  line-height: 1.35 !important;
+  padding: 10px 12px !important;
+}
+@media (min-width: 900px) {
+  .shift-report-card { padding: 16px 20px 14px; }
+}
+@media (max-width: 640px) {
+  .report-intro { font-size: .78rem; margin-bottom: 10px; }
+  .shift-report-card { padding: 12px 13px 10px; margin-top: 9px; }
+  .shift-card-heading { align-items: flex-start; }
+  .shift-card-caption { font-size: .72rem; }
+  .shift-report-card .count { font-size: 1.9rem !important; }
+  .stDownloadButton > button { min-height: 44px !important; font-size: .78rem !important; }
+}
+
+/* Part 2: refined header and dashboard summary cards */
+.header-kicker {
+  color: #8fa9d4; font-size: .68rem; font-weight: 700;
+  letter-spacing: 2.2px; margin-bottom: 8px; position: relative; z-index: 1;
+}
+.header-emblem {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 48px; height: 48px; margin: 0 auto 8px; border-radius: 15px;
+  background: rgba(0,212,255,.10); border: 1px solid rgba(0,212,255,.22);
+  font-size: 1.65rem; position: relative; z-index: 1;
+}
+.magic-header-wrap { margin-bottom: 22px; }
+.magic-header-inner {
+  padding: 24px 30px 22px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(46,117,182,.23), transparent 58%),
+              linear-gradient(135deg, #0b1730 0%, #12264b 52%, #0b1730 100%);
+}
+.magic-header-inner h1 {
+  font-family: 'Noto Sans Devanagari','Rajdhani',sans-serif;
+  font-size: clamp(1.45rem, 3.4vw, 2.15rem);
+  letter-spacing: .2px; line-height: 1.4; margin-bottom: 8px;
+}
+.magic-header-inner .subtitle {
+  letter-spacing: .4px; text-transform: none; font-size: .9rem;
+  color: #b7c9e8;
+}
+.header-badge {
+  letter-spacing: .5px; padding: 6px 14px;
+  background: rgba(34,197,94,.09); border-color: rgba(34,197,94,.25);
+  color: #86efac;
+}
+.dashboard-intro {
+  color: #91a7c9; font-size: .86rem; line-height: 1.6;
+  margin: -4px 0 14px 2px;
+}
+.metric-card {
+  min-height: 148px; padding: 17px 14px 14px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: linear-gradient(155deg, rgba(255,255,255,.055), rgba(255,255,255,.018));
+}
+.metric-top {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; margin-bottom: 5px;
+}
+.metric-card .icon { margin: 0; }
+.metric-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: currentColor; opacity: .75;
+}
+.metric-card .val { font-size: clamp(2rem, 3vw, 2.7rem); margin: 1px 0 5px; }
+.metric-card .lbl { color: #dce7fb; font-size: .83rem; }
+.metric-hint { color: #8197ba; font-size: .67rem; margin-top: 5px; text-align: center; }
+.dashboard-spacer { height: 10px; }
+@media (max-width: 640px) {
+  .magic-header-wrap { margin-bottom: 16px; }
+  .magic-header-inner { padding: 18px 12px 17px; }
+  .header-kicker { font-size: .57rem; letter-spacing: 1.2px; }
+  .header-emblem { width: 40px; height: 40px; border-radius: 12px; font-size: 1.35rem; }
+  .magic-header-inner h1 { font-size: clamp(1.15rem, 5.5vw, 1.55rem); }
+  .magic-header-inner .subtitle { font-size: .78rem; }
+  .header-badge { font-size: .66rem; margin-top: 8px; }
+  .dashboard-intro { font-size: .78rem; margin-bottom: 10px; }
+  .metric-card { min-height: 124px !important; padding: 11px 7px !important; }
+  .metric-card .val { font-size: clamp(1.55rem, 7vw, 1.9rem) !important; }
+  .metric-card .lbl { font-size: .72rem; line-height: 1.4; }
+  .metric-hint { font-size: .61rem; line-height: 1.35; }
+  .metric-top { margin-bottom: 3px; }
+  .metric-card .icon { font-size: 1rem; }
+}
+
+/* Part 1 UI polish: consistent spacing, readable controls, mobile-first dashboard */
+.stApp { overflow-x: hidden; }
+.main .block-container { width: 100%; }
+[data-testid="stSidebar"] { min-width: 0 !important; }
+[data-testid="stMetric"] {
+  background: rgba(255,255,255,.035);
+  border: 1px solid rgba(255,255,255,.09);
+  padding: 12px 14px;
+  border-radius: 12px;
+}
+.stTextInput input, .stTextArea textarea, .stSelectbox [role="combobox"],
+.stDateInput input, .stNumberInput input {
+  min-height: 42px !important;
+}
+.stButton > button, .stDownloadButton > button {
+  min-height: 42px;
+  font-weight: 700 !important;
+  letter-spacing: .1px;
+}
+.stTabs [data-baseweb="tab-highlight"] { background-color: var(--accent-cyan) !important; }
+.stTabs [data-baseweb="tab-border"] { background: transparent !important; }
+[data-testid="stDataFrame"] { width: 100% !important; }
+[data-testid="stDataFrame"] iframe { max-width: 100% !important; }
+.stAlert p { line-height: 1.55; }
+@media (max-width: 640px) {
+  /* Avoid a permanently reserved desktop-style sidebar gutter on narrow screens. */
+  section[data-testid="stSidebar"] { width: min(86vw, 320px) !important; }
+  .main .block-container { padding-left: .65rem !important; padding-right: .65rem !important; }
+  [data-testid="stHorizontalBlock"] { gap: .55rem !important; }
+  [data-testid="stHorizontalBlock"] > [data-testid="column"] {
+    min-width: min(100%, 135px) !important;
+    flex: 1 1 135px !important;
+  }
+  .metric-card { padding: 12px 6px !important; }
+  .metric-card .val { font-size: clamp(1.45rem, 7vw, 1.9rem) !important; }
+  .metric-card .lbl { overflow-wrap: anywhere; }
+  .shift-card { padding: 12px 6px 9px !important; }
+  .shift-card .count { font-size: clamp(1.6rem, 7vw, 2rem) !important; }
+  .stTabs [data-baseweb="tab-list"] { justify-content: flex-start !important; }
+  .stTabs [data-baseweb="tab"] { flex-shrink: 0 !important; }
+  [data-testid="stDataFrame"] { font-size: .8rem !important; }
+}
+
+/* Respect accessibility preferences and avoid motion on reduced-motion devices. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -349,17 +617,22 @@ def get_active_leave_ids(leave_df):
     today = now_ist().date()
     if leave_df.empty or "Mobile_No" not in leave_df.columns:
         return []
+    from_col = next((c for c in ("Leave_From", "From_Date") if c in leave_df.columns), None)
+    to_col = next((c for c in ("Leave_To", "To_Date") if c in leave_df.columns), None)
     active = []
     for _, row in leave_df.iterrows():
         mob = str(row.get("Mobile_No", "")).strip()
         if not mob:
             continue
         try:
-            from_date = pd.to_datetime(row.get("Leave_From", ""), dayfirst=True).date()
-            to_date   = pd.to_datetime(row.get("Leave_To",   ""), dayfirst=True).date()
+            if not from_col or not to_col:
+                raise ValueError("Leave date columns are missing")
+            from_date = pd.to_datetime(row.get(from_col, ""), dayfirst=True).date()
+            to_date = pd.to_datetime(row.get(to_col, ""), dayfirst=True).date()
             if from_date <= today <= to_date:
                 active.append(mob)
-        except:
+        except (TypeError, ValueError, OverflowError):
+            # Fail closed: malformed leave entries must not make an employee eligible for duty.
             active.append(mob)
     return active
 
@@ -388,58 +661,174 @@ def run_assignment(sheet_id):
     shift_col="Current_Shift"; date_col="Shift_Start_Date"; days_col="Days_On_Duty"
     duty_count_col="Total_Duty_3M"; s1_cnt,s2_cnt,s3_cnt="Shift1count","Shift2count","Shift3count"
 
-    if mob_col not in df.columns:
-        return False, f"❌ Column '{mob_col}' नहीं मिला।"
+    required_cols = [mob_col, name_col, status_col, shift_col, date_col, days_col,
+                     duty_count_col, s1_cnt, s2_cnt, s3_cnt]
+    missing_cols = [c for c in required_cols if c not in df.columns]
+    if missing_cols:
+        return False, "❌ Main_Duty में आवश्यक कॉलम नहीं मिले: " + ", ".join(missing_cols)
+    if df.empty:
+        return False, "❌ Main_Duty में कोई कर्मचारी रिकॉर्ड नहीं है।"
 
     df[mob_col] = df[mob_col].astype(str).str.strip()
+    if (df[mob_col] == "").any():
+        return False, "❌ Main_Duty में कुछ कर्मचारियों का मोबाइल नंबर खाली है। पहले उसे ठीक करें।"
+    duplicate_mobiles = df.loc[df[mob_col].duplicated(keep=False), mob_col].unique().tolist()
+    if duplicate_mobiles:
+        sample = ", ".join(duplicate_mobiles[:5])
+        extra = " आदि" if len(duplicate_mobiles) > 5 else ""
+        return False, f"❌ Main_Duty में डुप्लिकेट मोबाइल नंबर मिले ({sample}{extra})। ड्यूटी लगाने से पहले रिकॉर्ड ठीक करें।"
+
+    # Keep the original row order so only intended cells are updated later.
+    sheet_headers = list(df.columns)
+    sheet_row_by_mobile = {mobile: row_number for row_number, mobile in enumerate(df[mob_col].tolist(), start=2)}
+    original_records = {
+        row[mob_col]: row.to_dict()
+        for _, row in df.iterrows()
+    }
     df.set_index(mob_col, inplace=True)
     for c in [status_col, duty_count_col, s1_cnt, s2_cnt, s3_cnt, days_col]:
-        if c in df.columns:
-            df[c] = pd.to_numeric(df[c], errors="coerce").fillna(0).astype(int)
+        df[c] = pd.to_numeric(df[c], errors="coerce").fillna(0).astype(int)
+    df[shift_col] = df[shift_col].fillna("").astype(str).str.strip()
+    df[date_col] = df[date_col].fillna("").astype(str).str.strip()
 
     shift_rules = {}
-    for row in config_ws.get_all_values()[1:]:
-        if row[0]:
-            try: shift_rules[row[0]] = {"req":int(float(row[1])),"max":int(float(row[3]))}
-            except: continue
+    invalid_shift_configs = []
+    for row_number, row in enumerate(config_ws.get_all_values()[1:], start=2):
+        if not row or not str(row[0]).strip():
+            continue
+        shift_name = str(row[0]).strip()
+        try:
+            if len(row) < 4:
+                raise ValueError("चार कॉन्फ़िगरेशन कॉलम उपलब्ध नहीं हैं")
+            required_staff = int(float(row[1]))
+            max_days = int(float(row[3]))
+            if required_staff < 0 or max_days <= 0:
+                raise ValueError("Required staff शून्य से कम या Max days शून्य/ऋणात्मक है")
+            shift_rules[shift_name] = {"req": required_staff, "max": max_days}
+        except (TypeError, ValueError, OverflowError):
+            invalid_shift_configs.append(f"पंक्ति {row_number} ({shift_name})")
+
+    if not shift_rules:
+        return False, "❌ Config शीट में कोई मान्य शिफ्ट नियम नहीं मिला। Required Staff और Max Days जांचें।"
 
     leave_data = pd.DataFrame(leave_ws.get_all_records())
     leave_list = get_active_leave_ids(leave_data)
     logs = []
 
     for mobile, row in df.iterrows():
-        if not row[shift_col] or str(row[shift_col]).strip() == "":
-            df.at[mobile, days_col] = 0; continue
+        current_shift = str(row[shift_col]).strip()
+        if not current_shift:
+            df.at[mobile, days_col] = 0
+            continue
+
+        # Safety removals must not depend on the shift-start date being valid.
+        inactive = int(row[status_col]) != 1
+        on_leave = mobile in leave_list
+        if inactive or on_leave:
+            logs.append([today_str,now_time,mobile,row[name_col],"Removed",current_shift,"Success"])
+            df.at[mobile,shift_col]=""
+            df.at[mobile,date_col]=""
+            df.at[mobile,days_col]=0
+            continue
+
         try:
-            start_date = pd.to_datetime(row[date_col], dayfirst=True).date()
+            start_date = pd.to_datetime(row[date_col], dayfirst=True, errors="raise").date()
             diff = (today_dt.date() - start_date).days
             df.at[mobile, days_col] = max(0, diff)
-            rule = shift_rules.get(row[shift_col])
-            if (rule and diff >= rule["max"]) or (mobile in leave_list) or (row[status_col] == 0):
-                logs.append([today_str,now_time,mobile,row[name_col],"Removed",row[shift_col],"Success"])
-                df.at[mobile,shift_col]=""; df.at[mobile,date_col]=""; df.at[mobile,days_col]=0
-        except:
+            rule = shift_rules.get(current_shift)
+            if diff < 0:
+                # Future start dates are invalid; do not let them bypass rotation limits.
+                df.at[mobile, days_col] = 0
+            elif rule and diff >= rule["max"]:
+                logs.append([today_str,now_time,mobile,row[name_col],"Removed",current_shift,"Success"])
+                df.at[mobile,shift_col]=""
+                df.at[mobile,date_col]=""
+                df.at[mobile,days_col]=0
+        except (TypeError, ValueError, OverflowError):
+            # Keep the current assignment rather than silently resetting its duty age.
+            # Invalid dates are surfaced via a zero-day display and should be corrected in the sheet.
             df.at[mobile, days_col] = 0
 
+    staffing_shortfalls = []
     for s_name, rule in shift_rules.items():
-        needed = rule["req"] - len(df[df[shift_col]==s_name])
+        needed = int(rule["req"]) - int((df[shift_col].astype(str).str.strip() == str(s_name).strip()).sum())
         if needed > 0:
-            pool = df[(df[status_col]==1) & (df[shift_col]=="") & (~df.index.isin(leave_list))]
-            if pool.empty: continue
-            t_cnt = s1_cnt if "1" in s_name else (s2_cnt if "2" in s_name else s3_cnt)
-            sort_cols = [t_cnt, duty_count_col] if t_cnt in df.columns else [duty_count_col]
-            for m in pool.sort_values(by=sort_cols).head(needed).index:
-                df.at[m,shift_col]=s_name; df.at[m,date_col]=today_str; df.at[m,days_col]=0
+            pool = df[
+                (df[status_col] == 1)
+                & (df[shift_col].astype(str).str.strip() == "")
+                & (~df.index.isin(leave_list))
+            ]
+            if pool.empty:
+                staffing_shortfalls.append(f"{s_name}: {needed}")
+                continue
+            # Select the counter for this exact shift number; never silently use Shift3
+            # as a fallback for an unrecognized shift name.
+            shift_number = "".join(ch for ch in str(s_name) if ch.isdigit())
+            shift_counter_map = {"1": s1_cnt, "2": s2_cnt, "3": s3_cnt}
+            t_cnt = shift_counter_map.get(shift_number)
+            if t_cnt is None:
+                staffing_shortfalls.append(f"{s_name}: {needed} (शिफ्ट नाम/काउंटर कॉन्फ़िगरेशन जांचें)")
+                continue
+            sort_cols = [t_cnt, duty_count_col]
+            selected = pool.sort_values(by=sort_cols).head(needed).index
+            for m in selected:
+                df.at[m,shift_col]=s_name
+                df.at[m,date_col]=today_str
+                df.at[m,days_col]=0
                 df.at[m,duty_count_col]+=1
-                if t_cnt in df.columns: df.at[m,t_cnt]+=1
+                df.at[m,t_cnt]+=1
                 logs.append([today_str,now_time,m,df.at[m,name_col],"Assigned",s_name,"Success"])
+            remaining = needed - len(selected)
+            if remaining > 0:
+                staffing_shortfalls.append(f"{s_name}: {remaining}")
 
-    df_export = df.reset_index()
-    final_data = [df_export.columns.values.tolist()] + df_export.fillna("").values.tolist()
-    main_ws.update(final_data)
-    main_ws.update("L1", [[today_str]])
+    # Write only duty-related cells, not the whole worksheet. This preserves
+    # unrelated columns/formulas and avoids rewriting employee master data.
+    duty_columns = [shift_col, date_col, days_col, duty_count_col, s1_cnt, s2_cnt, s3_cnt]
+    header_positions = {str(header): position for position, header in enumerate(sheet_headers, start=1)}
+
+    def column_letter(column_number):
+        result = ""
+        while column_number:
+            column_number, remainder = divmod(column_number - 1, 26)
+            result = chr(65 + remainder) + result
+        return result
+
+    cell_updates = []
+    for mobile, row in df.iterrows():
+        sheet_row = sheet_row_by_mobile[mobile]
+        original = original_records[mobile]
+        for column in duty_columns:
+            new_value = row[column]
+            if pd.isna(new_value):
+                new_value = ""
+            elif hasattr(new_value, "item"):
+                new_value = new_value.item()
+            old_value = original.get(column, "")
+            old_text = "" if pd.isna(old_value) else str(old_value).strip()
+            new_text = "" if new_value == "" else str(new_value).strip()
+            if old_text != new_text:
+                col_letter = column_letter(header_positions[column])
+                cell_updates.append({
+                    "range": f"{col_letter}{sheet_row}",
+                    "values": [[new_value]],
+                })
+
+    # Update duty cells and the once-per-day marker in one Sheets batch request,
+    # so a successful duty write cannot be followed by a separate marker failure.
+    cell_updates.append({"range": "L1", "values": [[today_str]]})
+    main_ws.batch_update(cell_updates, value_input_option="USER_ENTERED")
     if logs: audit_ws.append_rows(logs)
     load_sheet_data.clear()
+    messages = []
+    if invalid_shift_configs:
+        messages.append("⚠️ Config की अमान्य पंक्तियां: " + ", ".join(invalid_shift_configs))
+    if staffing_shortfalls:
+        shortfall_text = " | ".join(staffing_shortfalls)
+        messages.append("⚠️ कुछ शिफ्टों में स्टाफ/काउंटर की समस्या: " + shortfall_text)
+    if messages:
+        return True, (f"⚠️ {today_str} की ड्यूटी प्रक्रिया पूरी हुई। "
+                      + " ".join(messages) + f" कुल {len(logs)} बदलाव हुए।")
     return True, f"✅ {today_str} की ड्यूटी सफलतापूर्वक लग गई! कुल {len(logs)} बदलाव हुए।"
 
 def df_to_excel_bytes(df, sheet_name="Sheet1"):
@@ -450,14 +839,15 @@ def df_to_excel_bytes(df, sheet_name="Sheet1"):
 
 # ── Header ────────────────────────────────────────────────────────────────────
 st.markdown("""
-<div class="magic-header-wrap"><div class="magic-header-inner">
-  <div class="particle p1"></div><div class="particle p2"></div>
-  <div class="particle p3"></div><div class="particle p4"></div>
-  <div class="particle p5"></div><div class="particle p6"></div>
-  <h1>🚨 साइबर क्राइम हेल्पलाइन 1930</h1>
-  <div class="subtitle">✦ ड्यूटी रोस्टर प्रबंधन प्रणाली ✦</div>
-  <div class="header-badge"><span class="live-dot"></span>LIVE SYSTEM • ACTIVE</div>
-</div></div>
+<div class="magic-header-wrap">
+  <div class="magic-header-inner">
+    <div class="header-kicker">UTTAR PRADESH • DUTY MANAGEMENT</div>
+    <div class="header-emblem">🚨</div>
+    <h1>साइबर क्राइम हेल्पलाइन 1930</h1>
+    <div class="subtitle">ड्यूटी रोस्टर प्रबंधन प्रणाली</div>
+    <div class="header-badge"><span class="live-dot"></span>डैशबोर्ड तैयार</div>
+  </div>
+</div>
 """, unsafe_allow_html=True)
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
@@ -491,19 +881,27 @@ inactive   = main_df[main_df[status_col] == 0]
 unassigned = main_df[(main_df[shift_col].str.strip()=="") & (~main_df[mob_col].isin(leave_ids)) & (main_df[status_col]==1)]
 
 # ── Summary Cards ─────────────────────────────────────────────────────────────
-st.markdown('<div class="section-title">📊 सारांश डैशबोर्ड</div>', unsafe_allow_html=True)
-c1,c2,c3,c4,c5 = st.columns(5)
-for col,icon,val,lbl,cls in [
-    (c1,"👥",len(main_df),"कुल कर्मचारी","card-blue"),
-    (c2,"🟢",len(on_duty),"ड्यूटी पर","card-green"),
-    (c3,"🌴",len(on_leave),"अवकाश पर","card-orange"),
-    (c4,"⏳",len(unassigned),"प्रतीक्षारत","card-purple"),
-    (c5,"🔴",len(inactive),"निष्क्रिय","card-red"),
-]:
+st.markdown('<div class="section-title">📊 कर्मचारी स्थिति का सारांश</div>', unsafe_allow_html=True)
+st.markdown('<p class="dashboard-intro">आज की ड्यूटी, अवकाश और उपलब्ध स्टाफ की एक नज़र में स्थिति</p>', unsafe_allow_html=True)
+summary_cards = [
+    ("👥", len(main_df), "कुल कर्मचारी", "पंजीकृत स्टाफ", "card-blue"),
+    ("🟢", len(on_duty), "ड्यूटी पर", "वर्तमान आवंटन", "card-green"),
+    ("🌴", len(on_leave), "अवकाश पर", "आज सक्रिय अवकाश", "card-orange"),
+    ("⏳", len(unassigned), "प्रतीक्षारत", "आवंटन शेष", "card-purple"),
+    ("🔴", len(inactive), "निष्क्रिय", "ड्यूटी से बाहर", "card-red"),
+]
+summary_cols = st.columns(5)
+for col, (icon, val, label, hint, cls) in zip(summary_cols, summary_cards):
     with col:
-        st.markdown(f'<div class="metric-card {cls}"><span class="icon">{icon}</span><div class="val">{val}</div><div class="lbl">{lbl}</div></div>', unsafe_allow_html=True)
+        st.markdown(
+            f'<div class="metric-card {cls}">'
+            f'<div class="metric-top"><span class="icon">{icon}</span><span class="metric-dot"></span></div>'
+            f'<div class="val">{val}</div><div class="lbl">{label}</div>'
+            f'<div class="metric-hint">{hint}</div></div>',
+            unsafe_allow_html=True,
+        )
 
-st.markdown("<br>", unsafe_allow_html=True)
+st.markdown("<div class='dashboard-spacer'></div>", unsafe_allow_html=True)
 
 # ── Run Assignment ────────────────────────────────────────────────────────────
 st.markdown('<div class="section-title">⚡ ड्यूटी लगाएं</div>', unsafe_allow_html=True)
@@ -527,144 +925,391 @@ if run_clicked:
 tab1,tab2,tab3,tab4,tab5 = st.tabs(["📋 शिफ्ट-वाइज ड्यूटी","👥 सभी कर्मचारी","🌴 अवकाश सूची","📜 Audit Log","➕ कर्मचारी जोड़ें / संपादित करें"])
 
 with tab1:
-    shifts=[s for s in main_df[shift_col].dropna().unique() if str(s).strip()!=""]
+    def shift_sort_key(value):
+        digits = "".join(ch for ch in str(value) if ch.isdigit())
+        return (0, int(digits), str(value).casefold()) if digits else (1, 0, str(value).casefold())
+
+    shifts = sorted(
+        [str(s).strip() for s in main_df[shift_col].dropna().unique() if str(s).strip()],
+        key=shift_sort_key,
+    )
+    st.markdown(
+        '<p class="report-intro">शिफ्ट के अनुसार तैनात कर्मचारियों की सूची देखें और ज़रूरत के अनुसार रिपोर्ट डाउनलोड करें।</p>',
+        unsafe_allow_html=True,
+    )
     if not shifts:
-        st.info("अभी कोई ड्यूटी नहीं लगी है। ऊपर 'ड्यूटी लगाएं' बटन दबाएं।")
+        st.info("अभी कोई ड्यूटी नहीं लगी है। ऊपर ‘आज की ड्यूटी लगाएं’ बटन से प्रक्रिया शुरू करें।")
     else:
         st.markdown('<div class="section-title">📥 शिफ्ट रिपोर्ट डाउनलोड करें</div>', unsafe_allow_html=True)
-        dl_cols=[c for c in [mob_col,name_col,"Designation",shift_col,"Days_On_Duty"] if c in main_df.columns]
-        dc1,dc2,dc3,dc4=st.columns(4)
-        for col_widget, snum in [(dc1,"1"),(dc2,"2"),(dc3,"3")]:
-            sn=next((s for s in sorted(shifts) if snum in s),None)
-            if sn:
-                with col_widget:
-                    st.download_button(label=f"⬇️ {sn} डाउनलोड",
-                        data=df_to_excel_bytes(on_duty[on_duty[shift_col]==sn][dl_cols],sn),
-                        file_name=f"{sn}_{today_str_ist}.xlsx",
+        dl_cols = [c for c in [mob_col, name_col, "Designation", shift_col, "Days_On_Duty"] if c in main_df.columns]
+        dl_names = {
+            mob_col: "मोबाइल नंबर", name_col: "कर्मचारी का नाम", "Designation": "पद",
+            shift_col: "वर्तमान शिफ्ट", "Days_On_Duty": "ड्यूटी के दिन",
+        }
+        download_cols = st.columns(4)
+        for slot, snum in enumerate(("1", "2", "3")):
+            shift_name = next(
+                (s for s in shifts if "".join(ch for ch in s if ch.isdigit()) == snum),
+                None,
+            )
+            if shift_name:
+                with download_cols[slot]:
+                    shift_data = on_duty[on_duty[shift_col].astype(str).str.strip() == shift_name][dl_cols]
+                    st.download_button(
+                        label=f"⬇️ {shift_name} रिपोर्ट",
+                        data=df_to_excel_bytes(shift_data.rename(columns=dl_names), f"Shift_{snum}"),
+                        file_name=f"Shift_{snum}_{today_str_ist}.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        use_container_width=True)
-        with dc4:
-            st.download_button(label="⬇️ सभी शिफ्ट (एक साथ)",
-                data=df_to_excel_bytes(on_duty[dl_cols].copy(),"All_Shifts"),
+                        use_container_width=True,
+                        key=f"download_shift_{snum}",
+                    )
+        with download_cols[3]:
+            st.download_button(
+                label="⬇️ सभी शिफ्ट रिपोर्ट",
+                data=df_to_excel_bytes(on_duty[dl_cols].rename(columns=dl_names), "All_Shifts"),
                 file_name=f"All_Shifts_{today_str_ist}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True)
-        st.markdown("---")
-        shift_colors={0:("s1","sc-s1"),1:("s2","sc-s2"),2:("s3","sc-s3")}
-        cols=st.columns(len(shifts))
-        for idx,s in enumerate(sorted(shifts)):
-            s_df=on_duty[on_duty[shift_col]==s]
-            bc,cc=shift_colors.get(idx%3,("s1","sc-s1"))
-            with cols[idx]:
-                st.markdown(f'<div class="shift-card {cc}"><span class="shift-badge {bc}">{s}</span><div class="count">{len(s_df)}</div><div class="unit">कर्मचारी</div></div>',unsafe_allow_html=True)
-                dc=[c for c in [name_col,"Designation","Days_On_Duty"] if c in main_df.columns]
-                st.dataframe(on_duty[on_duty[shift_col]==s][dc].rename(columns={name_col:"नाम","Designation":"पद","Days_On_Duty":"दिन"}),use_container_width=True,hide_index=True)
+                use_container_width=True,
+                key="download_all_shifts",
+            )
+
+        st.markdown('<div class="section-title">👥 शिफ्ट के अनुसार कर्मचारी</div>', unsafe_allow_html=True)
+        shift_styles = {
+            "1": ("s1", "sc-s1"),
+            "2": ("s2", "sc-s2"),
+            "3": ("s3", "sc-s3"),
+        }
+        for shift_name in shifts:
+            shift_data = on_duty[on_duty[shift_col].astype(str).str.strip() == shift_name].copy()
+            shift_number = "".join(ch for ch in shift_name if ch.isdigit())
+            badge_class, card_class = shift_styles.get(shift_number, ("s1", "sc-s1"))
+            st.markdown(
+                f'<div class="shift-card shift-report-card {card_class}">'
+                f'<div class="shift-card-heading"><span class="shift-badge {badge_class}">{shift_name}</span>'
+                f'<span class="shift-card-caption">तैनात कर्मचारी</span></div>'
+                f'<div class="count">{len(shift_data)}</div>'
+                f'<div class="unit">कर्मचारी</div></div>',
+                unsafe_allow_html=True,
+            )
+            display_cols = [col for col in [name_col, "Designation", "Days_On_Duty", mob_col] if col in shift_data.columns]
+            display_names = {
+                name_col: "कर्मचारी का नाम", "Designation": "पद",
+                "Days_On_Duty": "ड्यूटी के दिन", mob_col: "मोबाइल नंबर",
+            }
+            st.dataframe(
+                shift_data[display_cols].rename(columns=display_names),
+                use_container_width=True,
+                hide_index=True,
+                height=min(420, max(110, 38 * (len(shift_data) + 1))),
+            )
 
 with tab2:
-    st.markdown('<div class="section-title">👥 सम्पूर्ण कर्मचारी सूची</div>', unsafe_allow_html=True)
-    cs,cf=st.columns([2,1])
-    with cs: search=st.text_input("🔍 नाम / मोबाइल खोजें",placeholder="नाम टाइप करें...")
-    with cf: status_filter=st.selectbox("स्थिति",["सभी","ड्यूटी पर","अवकाश पर","प्रतीक्षारत","निष्क्रिय"])
-    disp=main_df.copy()
-    if search:
-        mask=disp[name_col].str.contains(search,case=False,na=False)
-        if mob_col in disp.columns: mask|=disp[mob_col].str.contains(search,na=False)
-        disp=disp[mask]
-    if status_filter=="ड्यूटी पर": disp=disp[disp[shift_col].str.strip()!=""]
-    elif status_filter=="अवकाश पर": disp=disp[disp[mob_col].isin(leave_ids)]
-    elif status_filter=="प्रतीक्षारत": disp=disp[(disp[shift_col].str.strip()=="")&(~disp[mob_col].isin(leave_ids))&(disp[status_col]==1)]
-    elif status_filter=="निष्क्रिय": disp=disp[disp[status_col]==0]
-    sc=[c for c in [mob_col,name_col,"Designation",shift_col,"Days_On_Duty","Total_Duty_3M",status_col] if c in disp.columns]
-    rm={mob_col:"मोबाइल",name_col:"नाम","Designation":"पद",shift_col:"वर्तमान शिफ्ट","Days_On_Duty":"दिन","Total_Duty_3M":"3M ड्यूटी",status_col:"स्थिति"}
-    st.dataframe(disp[sc].rename(columns=rm),use_container_width=True,hide_index=True,height=380)
-    cd1,cd2=st.columns([1,3])
-    with cd1:
-        st.download_button(label="⬇️ पूरी सूची डाउनलोड (.xlsx)",
-            data=df_to_excel_bytes(disp[sc].rename(columns=rm),"Staff_List"),
+    st.markdown('<div class="section-title">👥 कर्मचारी निर्देशिका</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<p class="directory-intro">नाम या मोबाइल से खोजें, फिर स्थिति के अनुसार सूची को छाँटें।</p>',
+        unsafe_allow_html=True,
+    )
+    search_col, filter_col = st.columns([2, 1])
+    with search_col:
+        search = st.text_input(
+            "🔎 कर्मचारी खोजें",
+            placeholder="नाम या मोबाइल नंबर लिखें",
+            key="staff_directory_search",
+        )
+    with filter_col:
+        status_filter = st.selectbox(
+            "कर्मचारी की स्थिति",
+            ["सभी", "ड्यूटी पर", "अवकाश पर", "प्रतीक्षारत", "निष्क्रिय"],
+            key="staff_directory_status",
+        )
+    disp = main_df.copy()
+    if search.strip():
+        query = search.strip()
+        name_mask = disp[name_col].astype(str).str.contains(query, case=False, na=False, regex=False)
+        mobile_mask = disp[mob_col].astype(str).str.contains(query, na=False, regex=False) if mob_col in disp.columns else False
+        disp = disp[name_mask | mobile_mask]
+    if status_filter == "ड्यूटी पर":
+        disp = disp[disp[shift_col].astype(str).str.strip() != ""]
+    elif status_filter == "अवकाश पर":
+        disp = disp[disp[mob_col].isin(leave_ids)]
+    elif status_filter == "प्रतीक्षारत":
+        disp = disp[(disp[shift_col].astype(str).str.strip() == "") & (~disp[mob_col].isin(leave_ids)) & (disp[status_col] == 1)]
+    elif status_filter == "निष्क्रिय":
+        disp = disp[disp[status_col] == 0]
+
+    display_cols = [col for col in [mob_col, name_col, "Designation", shift_col, "Days_On_Duty", "Total_Duty_3M", status_col] if col in disp.columns]
+    display_names = {
+        mob_col: "मोबाइल नंबर", name_col: "कर्मचारी का नाम", "Designation": "पद",
+        shift_col: "वर्तमान शिफ्ट", "Days_On_Duty": "ड्यूटी के दिन",
+        "Total_Duty_3M": "3 माह की ड्यूटी", status_col: "सक्रिय स्थिति",
+    }
+    display_df = disp[display_cols].rename(columns=display_names)
+    total_staff = len(main_df)
+    filtered_count = len(display_df)
+    st.markdown(
+        f'<div class="directory-count"><span>दिखाए जा रहे कर्मचारी</span><strong>{filtered_count}</strong>'
+        f'<span class="directory-count-muted">कुल पंजीकृत: {total_staff}</span></div>',
+        unsafe_allow_html=True,
+    )
+    st.dataframe(
+        display_df,
+        use_container_width=True,
+        hide_index=True,
+        height=min(480, max(140, 38 * (filtered_count + 1))),
+    )
+    export_col, _ = st.columns([1, 2])
+    with export_col:
+        st.download_button(
+            label="⬇️ फ़िल्टर की गई सूची डाउनलोड करें",
+            data=df_to_excel_bytes(display_df, "Staff_List"),
             file_name=f"Staff_List_{today_str_ist}.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            use_container_width=True)
-    st.caption(f"कुल: {len(disp)} कर्मचारी")
+            use_container_width=True,
+            key="download_filtered_staff",
+        )
+    st.caption("नोट: डाउनलोड में वही कर्मचारी आएँगे जो वर्तमान खोज और फ़िल्टर से मेल खाते हैं।")
 
 with tab3:
-    st.markdown('<div class="section-title">🌴 अवकाश पर कर्मचारी</div>', unsafe_allow_html=True)
-    if leave_df.empty:
-        st.info("कोई कर्मचारी अवकाश पर नहीं है।")
+    st.markdown('<div class="section-title">🌴 अवकाश प्रबंधन</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<p class="directory-intro">अवकाश की तारीख, स्थिति और कारण देखें। नया अवकाश दर्ज करने से पहले मोबाइल नंबर जाँच लें।</p>',
+        unsafe_allow_html=True,
+    )
+    td = now_ist().date()
+    ld = leave_df.copy()
+    leave_from_col = next((col for col in ("Leave_From", "From_Date") if col in ld.columns), None)
+    leave_to_col = next((col for col in ("Leave_To", "To_Date") if col in ld.columns), None)
+
+    def leave_status(row):
+        try:
+            if not leave_from_col or not leave_to_col:
+                return "⚠️ तारीख कॉलम उपलब्ध नहीं"
+            start_date = pd.to_datetime(row.get(leave_from_col, ""), dayfirst=True, errors="raise").date()
+            end_date = pd.to_datetime(row.get(leave_to_col, ""), dayfirst=True, errors="raise").date()
+            if start_date > end_date:
+                return "⚠️ तारीख जाँचें"
+            return "✅ आज सक्रिय" if start_date <= td <= end_date else ("⏳ आने वाला" if td < start_date else "◯ समाप्त")
+        except (TypeError, ValueError, OverflowError):
+            return "⚠️ तारीख जाँचें"
+
+    if ld.empty:
+        st.info("अभी अवकाश सूची में कोई रिकॉर्ड नहीं है। नीचे से नया अवकाश दर्ज कर सकते हैं।")
     else:
-        td=now_ist().date(); ld=leave_df.copy()
-        def leave_status(row):
+        ld["अवकाश स्थिति"] = ld.apply(leave_status, axis=1)
+        mobile_col = "Mobile_No" if "Mobile_No" in ld.columns else None
+        leave_search = st.text_input(
+            "🔎 अवकाश रिकॉर्ड खोजें",
+            placeholder="मोबाइल नंबर या कारण लिखें",
+            key="leave_directory_search",
+        )
+        if leave_search.strip():
+            query = leave_search.strip()
+            matches = pd.Series(False, index=ld.index)
+            for column in [mobile_col, "Leave_Reason", "Reason"]:
+                if column and column in ld.columns:
+                    matches |= ld[column].astype(str).str.contains(query, case=False, na=False, regex=False)
+            ld = ld[matches]
+        leave_display = ld.rename(columns={
+            "Mobile_No": "मोबाइल नंबर", "Leave_From": "अवकाश प्रारंभ",
+            "From_Date": "अवकाश प्रारंभ", "Leave_To": "अवकाश समाप्त",
+            "To_Date": "अवकाश समाप्त", "Leave_Reason": "कारण", "Reason": "कारण",
+        })
+        st.markdown(
+            f'<div class="directory-count"><span>मिलान वाले अवकाश रिकॉर्ड</span><strong>{len(leave_display)}</strong></div>',
+            unsafe_allow_html=True,
+        )
+        st.dataframe(
+            leave_display,
+            use_container_width=True,
+            hide_index=True,
+            height=min(420, max(140, 38 * (len(leave_display) + 1))),
+        )
+        st.download_button(
+            label="⬇️ अवकाश सूची डाउनलोड करें",
+            data=df_to_excel_bytes(leave_display, "Leave_List"),
+            file_name=f"Leave_List_{today_str_ist}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            use_container_width=True,
+            key="download_leave_list",
+        )
+
+    st.markdown('<div class="section-title">➕ नया अवकाश दर्ज करें</div>', unsafe_allow_html=True)
+    with st.form("new_leave_form", clear_on_submit=True):
+        leave_mobile_col, leave_dates_col = st.columns([1, 2])
+        with leave_mobile_col:
+            l_mob = st.text_input("कर्मचारी का मोबाइल नंबर", key="l_mob")
+        with leave_dates_col:
+            l_from, l_to = st.columns(2)
+            with l_from:
+                l_start = st.date_input("अवकाश शुरू", value=td, key="l_from")
+            with l_to:
+                l_end = st.date_input("अवकाश समाप्त", value=td, key="l_to")
+        l_reason = st.text_input("अवकाश का कारण", key="l_reason")
+        leave_submitted = st.form_submit_button("✅ अवकाश दर्ज करें", use_container_width=True)
+
+    if leave_submitted:
+        if not l_mob.strip():
+            st.warning("कर्मचारी का मोबाइल नंबर भरें।")
+        elif l_start > l_end:
+            st.warning("अवकाश शुरू होने की तारीख, समाप्ति तारीख से बाद की नहीं हो सकती।")
+        else:
             try:
-                f=pd.to_datetime(row.get("Leave_From",""),dayfirst=True).date()
-                t=pd.to_datetime(row.get("Leave_To",""),dayfirst=True).date()
-                return "✅ आज सक्रिय" if f<=td<=t else ("⏳ आने वाली" if td<f else "❌ समाप्त")
-            except: return "—"
-        ld["अवकाश स्थिति"]=ld.apply(leave_status,axis=1)
-        st.dataframe(ld,use_container_width=True,hide_index=True,height=320)
-        cll,_=st.columns([1,3])
-        with cll:
-            st.download_button(label="⬇️ अवकाश सूची डाउनलोड (.xlsx)",
-                data=df_to_excel_bytes(ld,"Leave_List"),
-                file_name=f"Leave_List_{today_str_ist}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True)
-        st.caption(f"कुल अवकाश: {len(leave_df)}")
-    st.markdown("---")
-    st.markdown("**नया अवकाश जोड़ें**")
-    lc1,lc2,lc3=st.columns(3)
-    with lc1: l_mob=st.text_input("मोबाइल नं.",key="l_mob")
-    with lc2: l_from=st.date_input("से तारीख (Leave_From)",key="l_from")
-    with lc3: l_to=st.date_input("तक तारीख (Leave_To)",key="l_to")
-    l_reason=st.text_input("कारण",key="l_reason")
-    if st.button("✅ अवकाश दर्ज करें"):
-        if l_mob:
-            try:
-                client=get_client(); sh=client.open_by_key(SHEET_ID)
-                sh.worksheet("Leave").append_row([l_mob,l_from.strftime("%d-%m-%Y"),l_to.strftime("%d-%m-%Y"),l_reason])
-                st.success(f"✅ अवकाश दर्ज हो गया!"); load_sheet_data.clear(); st.rerun()
-            except Exception as e: st.error(f"Error: {e}")
-        else: st.warning("मोबाइल नं. भरें।")
+                client = get_client()
+                sh = client.open_by_key(SHEET_ID)
+                leave_ws = sh.worksheet("Leave")
+                leave_headers = leave_ws.row_values(1)
+                from_col = next((col for col in ("Leave_From", "From_Date") if col in leave_headers), None)
+                to_col = next((col for col in ("Leave_To", "To_Date") if col in leave_headers), None)
+                reason_col = next((col for col in ("Leave_Reason", "Reason") if col in leave_headers), None)
+                if "Mobile_No" not in leave_headers or not from_col or not to_col:
+                    raise ValueError("Leave शीट में Mobile_No, From_Date/Leave_From और To_Date/Leave_To हेडर आवश्यक हैं।")
+                normalized_mobile = "".join(ch for ch in l_mob if ch.isdigit())
+                if len(normalized_mobile) == 12 and normalized_mobile.startswith("91"):
+                    normalized_mobile = normalized_mobile[2:]
+                if len(normalized_mobile) != 10:
+                    raise ValueError("मोबाइल नंबर 10 अंकों का होना चाहिए।")
+                # एक कर्मचारी के अलग-अलग समय पर कई अवकाश रिकॉर्ड हो सकते हैं,
+                # इसलिए मोबाइल नंबर के आधार पर पुराने अवकाश रिकॉर्ड को ब्लॉक न करें।
+                leave_values = {
+                    "Mobile_No": normalized_mobile,
+                    from_col: l_start.strftime("%d-%m-%Y"),
+                    to_col: l_end.strftime("%d-%m-%Y"),
+                }
+                if reason_col:
+                    leave_values[reason_col] = l_reason.strip()
+                leave_ws.append_row(
+                    [leave_values.get(header, "") for header in leave_headers],
+                    value_input_option="USER_ENTERED",
+                )
+                st.success("अवकाश सफलतापूर्वक दर्ज हो गया।")
+                load_sheet_data.clear()
+                st.rerun()
+            except Exception as e:
+                st.error(f"अवकाश दर्ज नहीं हो सका: {e}")
 
 with tab4:
-    st.markdown('<div class="section-title">📜 Audit Log</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">📜 ड्यूटी गतिविधि लॉग</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<p class="directory-intro">ड्यूटी आवंटन और हटाने की गतिविधियों को तारीख व कार्रवाई के आधार पर देखें।</p>',
+        unsafe_allow_html=True,
+    )
     if audit_df.empty:
-        st.info("अभी कोई लॉग नहीं है।")
+        st.info("अभी कोई Audit Log रिकॉर्ड उपलब्ध नहीं है।")
     else:
-        ac1,ac2=st.columns([1,1])
-        with ac1: date_filter=st.text_input("तारीख फ़िल्टर (DD-MM-YYYY)",placeholder="जैसे: 15-06-2025")
-        with ac2: action_filter=st.selectbox("Action",["सभी","Assigned","Removed"])
-        a_df=audit_df.copy()
-        if date_filter: a_df=a_df[a_df["Date"].str.contains(date_filter,na=False)]
-        if action_filter!="सभी": a_df=a_df[a_df["Action"]==action_filter]
-        a_df_sorted=a_df.sort_values("Date",ascending=False) if "Date" in a_df.columns else a_df
-        st.dataframe(a_df_sorted,use_container_width=True,hide_index=True,height=360)
-        cal,_=st.columns([1,3])
-        with cal:
-            st.download_button(label="⬇️ Audit Log डाउनलोड (.xlsx)",
-                data=df_to_excel_bytes(a_df_sorted,"Audit_Log"),
-                file_name=f"Audit_Log_{today_str_ist}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True)
-        st.caption(f"कुल रिकॉर्ड: {len(a_df)}")
+        audit_data = audit_df.copy()
+        filter_date_col, filter_action_col = st.columns([1, 1])
+        with filter_date_col:
+            date_filter = st.text_input(
+                "तारीख फ़िल्टर (DD-MM-YYYY)",
+                placeholder="उदाहरण: 20-10-2026",
+                key="audit_date_filter",
+            )
+        with filter_action_col:
+            action_filter = st.selectbox(
+                "कार्रवाई",
+                ["सभी", "Assigned", "Removed"],
+                format_func=lambda value: {"सभी": "सभी कार्रवाइयाँ", "Assigned": "ड्यूटी लगाई", "Removed": "ड्यूटी हटाई"}[value],
+                key="audit_action_filter",
+            )
+        if date_filter.strip() and "Date" in audit_data.columns:
+            audit_data = audit_data[
+                audit_data["Date"].astype(str).str.contains(date_filter.strip(), na=False, regex=False)
+            ]
+        if action_filter != "सभी" and "Action" in audit_data.columns:
+            audit_data = audit_data[audit_data["Action"].astype(str) == action_filter]
+        if "Date" in audit_data.columns:
+            audit_data = audit_data.sort_values("Date", ascending=False, kind="stable")
+        st.markdown(
+            f'<div class="directory-count"><span>फ़िल्टर से मिले लॉग</span><strong>{len(audit_data)}</strong>'
+            f'<span class="directory-count-muted">कुल लॉग: {len(audit_df)}</span></div>',
+            unsafe_allow_html=True,
+        )
+        st.dataframe(
+            audit_data,
+            use_container_width=True,
+            hide_index=True,
+            height=min(480, max(140, 38 * (len(audit_data) + 1))),
+        )
+        st.download_button(
+            label="⬇️ फ़िल्टर किया हुआ Audit Log डाउनलोड करें",
+            data=df_to_excel_bytes(audit_data, "Audit_Log"),
+            file_name=f"Audit_Log_{today_str_ist}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            use_container_width=True,
+            key="download_filtered_audit",
+        )
 
 with tab5:
     st.markdown('<div class="section-title">➕ नया कर्मचारी जोड़ें</div>', unsafe_allow_html=True)
     ec1,ec2=st.columns(2)
+    employee_headers=list(main_df.columns)
+    rank_col=next((c for c in ("Rank","Employee_Rank") if c in employee_headers),None)
+    pref_col=next((c for c in ("Shift_Preference","Shift_Pref") if c in employee_headers),None)
+    e_rank=""
+    e_shift_pref=""
     with ec1:
         e_mob=st.text_input("मोबाइल नं. *",key="e_mob")
         e_name=st.text_input("नाम (हिंदी) *",key="e_name")
         e_desig=st.text_input("पद / पदनाम",key="e_desig")
     with ec2:
-        e_rank=st.text_input("रैंक",key="e_rank")
+        if rank_col:
+            e_rank=st.text_input("रैंक",key="e_rank")
         e_status=st.selectbox("स्थिति",[1,0],format_func=lambda x:"सक्रिय" if x==1 else "निष्क्रिय")
-        e_shift_pref=st.selectbox("शिफ्ट वरीयता",["","Shift1","Shift2","Shift3"])
-    if st.button("💾 कर्मचारी सहेजें"):
-        if e_mob and e_name:
+        if pref_col:
+            e_shift_pref=st.selectbox("शिफ्ट वरीयता",["","Shift1","Shift2","Shift3"],key="e_shift_pref")
+    if st.button("💾 कर्मचारी सहेजें", use_container_width=True):
+        new_mobile = e_mob.strip()
+        if not new_mobile or not e_name.strip():
+            st.warning("मोबाइल नं. और नाम ज़रूरी है।")
+        elif not (new_mobile.isascii() and new_mobile.isdigit() and len(new_mobile) == 10):
+            st.warning("⚠️ मोबाइल नंबर 10 अंकों का होना चाहिए।")
+        else:
             try:
                 client=get_client(); sh=client.open_by_key(SHEET_ID)
-                sh.worksheet("Main_Duty").append_row([e_mob,e_name,e_desig,e_rank,e_status,e_shift_pref,"",0,0,0,0,0])
-                st.success(f"✅ {e_name} जोड़ा गया!"); load_sheet_data.clear(); st.rerun()
+                main_ws=sh.worksheet("Main_Duty")
+                employee_headers=main_ws.row_values(1)
+                required_headers=("Mobile_No","Employee_Name","Designation","Current_Shift","Shift_Start_Date",
+                                  "Days_On_Duty","STATUS","Total_Duty_3M","Shift1count","Shift2count","Shift3count")
+                missing=[h for h in required_headers if h not in employee_headers]
+                if missing:
+                    raise ValueError("Main_Duty शीट में आवश्यक कॉलम नहीं मिले: " + ", ".join(missing))
+
+                # Avoid duplicate employee records for the same mobile number.
+                existing_rows = main_ws.get_all_records()
+                def normalized_mobile(value):
+                    digits = "".join(ch for ch in str(value).strip() if ch.isdigit())
+                    if len(digits) == 12 and digits.startswith("91"):
+                        digits = digits[2:]
+                    return digits if len(digits) == 10 else ""
+
+                duplicate = any(
+                    normalized_mobile(row.get("Mobile_No", "")) == new_mobile
+                    for row in existing_rows
+                )
+                if duplicate:
+                    st.warning("⚠️ इस मोबाइल नंबर से कर्मचारी पहले से दर्ज है। दोबारा जोड़ने के बजाय कर्मचारी सूची में उसे खोजें।")
+                else:
+                    employee_values={
+                        "Mobile_No":new_mobile,
+                        "Employee_Name":e_name.strip(),
+                        "Designation":e_desig.strip(),
+                        "Current_Shift":"",
+                        "Shift_Start_Date":"",
+                        "Days_On_Duty":0,
+                        "STATUS":int(e_status),
+                        "Total_Duty_3M":0,
+                        "Shift1count":0,
+                        "Shift2count":0,
+                        "Shift3count":0,
+                    }
+                    if rank_col:
+                        employee_values[rank_col]=e_rank.strip()
+                    if pref_col:
+                        employee_values[pref_col]=e_shift_pref
+                    main_ws.append_row([employee_values.get(h,"") for h in employee_headers],
+                                      value_input_option="USER_ENTERED")
+                    st.success(f"✅ {e_name.strip()} जोड़ा गया!"); load_sheet_data.clear(); st.rerun()
             except Exception as e: st.error(f"Error: {e}")
-        else: st.warning("मोबाइल नं. और नाम ज़रूरी है।")
     st.markdown("---")
     st.markdown('<div class="section-title">🔄 Cache रिफ्रेश करें</div>', unsafe_allow_html=True)
     if st.button("🔃 डेटा रिफ्रेश करें"):
@@ -708,9 +1353,14 @@ if search_btn or (search_mobile and len(search_mobile.strip()) == 10):
             </div>""", unsafe_allow_html=True)
         else:
             row        = result.iloc[0]
-            emp_name   = row.get("Employee_Name","—")
-            emp_desig  = row.get("Designation","—")
-            emp_shift  = str(row.get("Current_Shift","")).strip()
+            # Escape sheet-provided text before embedding it in custom HTML.
+            # This keeps employee names/designations/reasons from being interpreted as markup.
+            emp_name_raw = row.get("Employee_Name", "—")
+            emp_desig_raw = row.get("Designation", "—")
+            emp_name = html.escape(str(emp_name_raw if pd.notna(emp_name_raw) else "—"))
+            emp_desig = html.escape(str(emp_desig_raw if pd.notna(emp_desig_raw) else "—"))
+            emp_shift_raw = str(row.get("Current_Shift", "")).strip()
+            emp_shift = html.escape(emp_shift_raw)
             emp_days   = int(row.get("Days_On_Duty",0) or 0)
             emp_total  = int(row.get("Total_Duty_3M",0) or 0)
             emp_status = int(row.get("STATUS",0) or 0)
@@ -731,10 +1381,16 @@ if search_btn or (search_mobile and len(search_mobile.strip()) == 10):
                 lv=leave_df[leave_df["Mobile_No"].astype(str).str.strip()==emp_mob]
                 if not lv.empty:
                     lr=lv.iloc[0]
-                    reason_txt=f"&nbsp;|&nbsp; कारण: {lr.get('Leave_Reason','')}" if lr.get('Leave_Reason','') else ""
+                    leave_from_value=lr.get("Leave_From",lr.get("From_Date","—"))
+                    leave_to_value=lr.get("Leave_To",lr.get("To_Date","—"))
+                    leave_reason_raw = lr.get("Leave_Reason", lr.get("Reason", ""))
+                    leave_reason = html.escape(str(leave_reason_raw)) if pd.notna(leave_reason_raw) else ""
+                    leave_from_value = html.escape(str(leave_from_value))
+                    leave_to_value = html.escape(str(leave_to_value))
+                    reason_txt=f"&nbsp;|&nbsp; कारण: {leave_reason}" if leave_reason else ""
                     leave_html=f"""<div style="background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.25);
                         border-radius:10px;padding:10px 16px;margin-top:14px;font-size:0.83rem;color:#fb923c;">
-                        📅 अवकाश: <strong>{lr.get('Leave_From','—')}</strong> से <strong>{lr.get('Leave_To','—')}</strong> तक{reason_txt}
+                        📅 अवकाश: <strong>{leave_from_value}</strong> से <strong>{leave_to_value}</strong> तक{reason_txt}
                     </div>"""
 
             st.markdown(f"""
